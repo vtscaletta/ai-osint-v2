@@ -572,7 +572,10 @@ class MarkovNarrative:
         M = self.base_matrix.copy()
 
         # ── Подсчёт состояния сети ──
-        amp_ratio = abm.get_active_ratio("amplifier")
+        # amp_presence: доля АКТИВНЫХ усилителей в ОБЩЕЙ популяции
+        # (не среди усилителей, а среди всех агентов)
+        active_amps = sum(1 for a in abm.agents if a.agent_type == "amplifier" and a.active)
+        amp_presence = active_amps / max(abm.n_agents, 1)
         total_active_ratio = abm.get_active_ratio()
         active_mediators = sum(
             1 for a in abm.agents
@@ -581,41 +584,50 @@ class MarkovNarrative:
         scenario_amp = abm.scenario["amp_ratio"]
 
         # ── Сценарный модификатор ──
-        # Доля усилителей в популяции (scenario.amp_ratio) определяет
-        # базовый «уровень координации»: чем выше — тем легче нарративу
-        # продвигаться к вирусной фазе, даже до активации всех ботов.
+        # Нелинейная зависимость с порогом:
+        # amp_ratio < 0.15 → нет сдвига (органический фон)
+        # amp_ratio >= 0.15 → нелинейный сдвиг «вправо»
         #
-        # Это отражает реальность: координированные сети изначально
-        # спроектированы для быстрого распространения (Meta CIB, 2023).
-        coordination_factor = scenario_amp * 0.4
-        for i in range(4):  # LATENT .. VIRAL (без DECLINING)
-            shift = min(coordination_factor, M[i][i] * 0.4)
-            M[i][i] -= shift
-            M[i][min(i + 1, 4)] += shift
+        #   organic  (0.05): factor=0.00 → нет эффекта
+        #   hybrid   (0.25): factor≈0.39 → умеренный сдвиг
+        #   amplified (0.35): factor≈0.63 → сильный сдвиг
+        #   coordinated (0.60): factor≈1.28 → мощный сдвиг
+        if scenario_amp >= 0.15:
+            coordination_factor = (scenario_amp ** 1.3) * 3.0
+            for i in range(4):  # LATENT .. VIRAL (без DECLINING)
+                shift = min(coordination_factor, M[i][i] * 0.6)
+                M[i][i] -= shift
+                M[i][min(i + 1, 4)] += shift
 
         # ── Условие 1: активные усилители ──
-        # Если > 30% усилителей активны → дополнительный разгон «вправо»
-        if amp_ratio > 0.3:
-            boost = amp_ratio * 0.20
+        # amp_presence > 10%: значимая доля усилителей в общей сети
+        # organic (5% усилители × часть активных ≈ 2-3%) → не триггерит
+        # coordinated (60% усилители × активных ≈ 30%+) → триггерит
+        if amp_presence > 0.10:
+            boost = amp_presence * 0.40
             for i in range(4):
                 shift = min(boost, M[i][i] * 0.4)
                 M[i][i] -= shift
                 M[i][min(i + 1, 4)] += shift
 
         # ── Условие 2: медиаторы ──
-        # Легитимизация: РОСТ → ВИРУСНАЯ ускоряется
-        if active_mediators > 2:
+        # Медиаторы легитимизируют нарратив ТОЛЬКО при наличии
+        # координации (amp_presence > 5%). Без усилителей медиаторы
+        # не ускоряют вирусную фазу — они просто проверяют факты.
+        if active_mediators > 2 and amp_presence > 0.05:
             med_boost = min(0.15, active_mediators * 0.03)
             M[2][3] += med_boost
             M[2][2] -= med_boost
 
-        # ── Условие 3: откат при низкой активности ──
-        # Если общая доля активных < 30% — нарратив деградирует
-        # (без аудитории информационная волна затухает).
-        if total_active_ratio < 0.30:
-            pullback = 0.10 * (1.0 - total_active_ratio)
+        # ── Условие 3: откат при низкой координации ──
+        # Без активных усилителей нарратив деградирует.
+        # Сила отката обратно пропорциональна доле активных усилителей.
+        # organic (amp_presence≈2%): pullback≈0.09 → сильный откат
+        # coordinated (amp_presence≈30%): pullback≈0.02 → слабый
+        pullback_strength = 0.10 * (1.0 - min(amp_presence * 3.0, 0.95))
+        if pullback_strength > 0.01:
             for i in range(1, 5):  # EMERGING .. DECLINING
-                shift = min(pullback, M[i][i] * 0.5)
+                shift = min(pullback_strength, M[i][i] * 0.5)
                 M[i][i] -= shift
                 M[i][max(i - 1, 0)] += shift
 
@@ -660,8 +672,9 @@ class MarkovNarrative:
         return [MARKOV_STATES[s]["name_ru"] for s in self.trajectory]
 
     def get_max_state(self) -> int:
-        """Максимальное достигнутое состояние."""
-        return max(self.trajectory)
+        """Максимальное достигнутое состояние (без DECLINING=4)."""
+        intensity_states = [s for s in self.trajectory if s < 4]
+        return max(intensity_states) if intensity_states else 0
 
     def reset(self, initial_state: int = 0) -> None:
         """Сброс цепи."""
@@ -812,21 +825,26 @@ class MonteCarloEngine:
             markov = MarkovNarrative(initial_state=0)
 
             # ── Стохастический шум матрицы переходов ──
+            # Шум ПРОПОРЦИОНАЛЬНЫЙ: ±5% от текущего значения,
+            # а не абсолютный ±0.05. Это сохраняет порядок величин:
+            # P=0.001 → шум ±0.00005, а не ±0.05.
             noise_rng = np.random.default_rng(iter_seed + 100_000)
             noise_matrix = noise_rng.uniform(
-                -self.MATRIX_NOISE,
-                self.MATRIX_NOISE,
+                1.0 - self.MATRIX_NOISE,
+                1.0 + self.MATRIX_NOISE,
                 size=(MarkovNarrative.N_STATES, MarkovNarrative.N_STATES),
             )
             markov.base_matrix = np.clip(
-                MARKOV_BASE_MATRIX + noise_matrix,
-                0.001, None,
+                MARKOV_BASE_MATRIX * noise_matrix,
+                0.0001, None,
             )
             # Нормализация строк после шума
             for row_idx in range(MarkovNarrative.N_STATES):
                 markov.base_matrix[row_idx] /= markov.base_matrix[row_idx].sum()
 
             # ── Прогон ──
+            # max_state отслеживает пиковую ИНТЕНСИВНОСТЬ (0–3).
+            # DECLINING (4) — это затухание, не пик. Исключаем.
             max_state = 0
             viral_step: Optional[int] = None
 
@@ -836,7 +854,8 @@ class MonteCarloEngine:
                 # Шаг ABM
                 abm.step(markov_state=new_state)
 
-                if new_state > max_state:
+                # Пиковое состояние = максимум из 0-3 (без DECLINING)
+                if new_state < 4 and new_state > max_state:
                     max_state = new_state
 
                 # Первое достижение ВИРУСНОЙ фазы (индекс 3)
