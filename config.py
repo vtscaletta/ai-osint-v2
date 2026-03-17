@@ -19,53 +19,52 @@ import numpy as np
 
 @dataclass(frozen=True)
 class WashokuPalette:
-    """Профессиональная аналитическая палитра — тёмная тема.
+    """Профессиональная аналитическая палитра — тёмно-синяя тема.
     
-    Три слоя глубины:
-        Слой 0 (фон):     #0F1117 — глубокий тёмно-синий
-        Слой 1 (карточки): #1A1D2E — приподнятые элементы
-        Слой 2 (sidebar):  #0A0C15 — самый глубокий
-    
-    Акценты: синий #4C9AFF, зелёный #36B37E, жёлтый #FFAB00, красный #FF5630
+    Стиль: Bloomberg / аналитические дашборды.
+    Три слоя:
+        Слой 0 (фон):     #0B0F19 — глубокий тёмно-синий
+        Слой 1 (карточки): #151A2D — приподнятые панели
+        Слой 2 (sidebar):  #0D1120 — навигация
     """
 
     # --- Фоны (3 слоя глубины) ---
-    bg_main: str = "#0F1117"        # Слой 0 — основной фон
-    bg_card: str = "#1A1D2E"        # Слой 1 — карточки, панели
-    bg_dark: str = "#0A0C15"        # Слой 2 — sidebar, footer, tooltip
+    bg_main: str = "#0B0F19"        # Основной фон — глубокий тёмно-синий
+    bg_card: str = "#151A2D"        # Карточки, панели — чуть светлее
+    bg_dark: str = "#0D1120"        # Sidebar, footer, tooltips
 
     # --- Синие (навигация, акценты) ---
-    blue_indigo: str = "#4C9AFF"    # Основной акцент — яркий синий
-    blue_ultra: str = "#2684FF"     # Активный / hover
-    blue_navy: str = "#1A3A5C"      # Тёмно-синий (фон хедера)
+    blue_indigo: str = "#5B9CF6"    # Основной акцент — небесно-синий
+    blue_ultra: str = "#3B82F6"     # Hover / активный
+    blue_navy: str = "#1E2A45"      # Тёмный синий (фон хедера)
 
     # --- Красные (аномалия, опасность) ---
-    red_crimson: str = "#FF5630"    # Основной красный
-    red_rouge: str = "#DE350B"      # Тёмный красный
-    red_beni: str = "#FF7452"       # Светлый красный (графики)
+    red_crimson: str = "#EF5350"    # Красный — тревога
+    red_rouge: str = "#D32F2F"      # Тёмный красный
+    red_beni: str = "#FF7043"       # Коралловый (графики)
 
     # --- Зелёные (норма, успех) ---
-    green_deep: str = "#36B37E"     # Основной зелёный
-    green_bamboo: str = "#57D9A3"   # Светлый зелёный
-    green_wasabi: str = "#00875A"   # Тёмный зелёный
+    green_deep: str = "#4CAF50"     # Зелёный — норма
+    green_bamboo: str = "#66BB6A"   # Светлый зелёный
+    green_wasabi: str = "#388E3C"   # Тёмный зелёный
 
-    # --- Жёлтые / Оранжевые (внимание, предупреждение) ---
-    yellow_kerria: str = "#FFAB00"  # Основной жёлтый / золотой
-    yellow_sun: str = "#FFE380"     # Светлый жёлтый
-    orange_kaki: str = "#FF8B00"    # Оранжевый
-    orange_daidai: str = "#FF991F"  # Янтарный
+    # --- Жёлтые / Оранжевые ---
+    yellow_kerria: str = "#FFB300"  # Золотой — предупреждение
+    yellow_sun: str = "#FFD54F"     # Светлый жёлтый
+    orange_kaki: str = "#FF9800"    # Оранжевый
+    orange_daidai: str = "#FFA726"  # Янтарный
 
     # --- Фиолетовые ---
-    purple_murasaki: str = "#8777D9"  # Основной фиолетовый
-    purple_edo: str = "#6554C0"       # Тёмный фиолетовый
+    purple_murasaki: str = "#9575CD"
+    purple_edo: str = "#7E57C2"
 
     # --- Серые ---
-    gray_nezumi: str = "#8B92A5"    # Средний серый (вторичный текст)
-    gray_silver: str = "#A5ADBA"    # Серебро (подписи)
+    gray_nezumi: str = "#8892A7"    # Вторичный текст
+    gray_silver: str = "#A8B2C1"    # Подписи, метки
 
     # --- Текст ---
-    text_primary: str = "#E6E9EF"   # Основной текст — светлый
-    text_secondary: str = "#8B92A5" # Вторичный — приглушённый
+    text_primary: str = "#E8ECF1"   # Основной — почти белый
+    text_secondary: str = "#8892A7" # Вторичный — приглушённый
 
     # --- Светофорная система ---
     @property
@@ -80,28 +79,28 @@ class WashokuPalette:
     def traffic_red(self) -> str:
         return self.red_crimson
 
-    # --- Цвета агентов (4 типа) ---
+    # --- Цвета агентов ---
     @property
     def agent_colors(self) -> Dict[str, str]:
         return {
-            "initiator":  self.red_crimson,    # Красный
-            "amplifier":  self.orange_daidai,   # Янтарный
-            "mediator":   self.blue_indigo,     # Синий
-            "recipient":  self.gray_silver,     # Серебро
+            "initiator":  self.red_crimson,
+            "amplifier":  self.orange_daidai,
+            "mediator":   self.blue_indigo,
+            "recipient":  self.gray_silver,
         }
 
-    # --- Цвета состояний Маркова (5 фаз) ---
+    # --- Цвета состояний Маркова ---
     @property
     def markov_colors(self) -> Dict[str, str]:
         return {
-            "latent":    self.gray_nezumi,     # Латентная
-            "emerging":  self.yellow_kerria,   # Зарождение
-            "growing":   self.orange_kaki,     # Рост
-            "viral":     self.red_crimson,     # Вирусная
-            "declining": self.blue_indigo,     # Затухание
+            "latent":    self.gray_nezumi,
+            "emerging":  self.yellow_kerria,
+            "growing":   self.orange_kaki,
+            "viral":     self.red_crimson,
+            "declining": self.blue_indigo,
         }
 
-    # --- Цвета для круговых диаграмм ---
+    # --- Круговые диаграммы ---
     @property
     def pie_sequence(self) -> List[str]:
         return [
@@ -123,11 +122,9 @@ COLORS = WashokuPalette()
 CUSTOM_CSS = f"""
 <style>
     /* ===================================================
-       AI-OSINT v2.0 — Профессиональная тёмная тема
-       Слои: #0F1117 → #1A1D2E → #0A0C15
+       AI-OSINT v2.0 — Тёмно-синяя аналитическая тема
        =================================================== */
 
-    /* --- Общий фон --- */
     .stApp {{
         background-color: {COLORS.bg_main} !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -140,7 +137,7 @@ CUSTOM_CSS = f"""
         color: {COLORS.text_primary} !important;
     }}
 
-    /* --- Боковая панель (самый глубокий слой) --- */
+    /* --- Sidebar --- */
     section[data-testid="stSidebar"],
     section[data-testid="stSidebar"] > div {{
         background-color: {COLORS.bg_dark} !important;
@@ -155,59 +152,43 @@ CUSTOM_CSS = f"""
     }}
     section[data-testid="stSidebar"] .stSlider label,
     section[data-testid="stSidebar"] .stSelectbox label,
-    section[data-testid="stSidebar"] .stNumberInput label,
-    section[data-testid="stSidebar"] .stRadio label {{
+    section[data-testid="stSidebar"] .stNumberInput label {{
         color: {COLORS.gray_silver} !important;
     }}
-    section[data-testid="stSidebar"] .stMarkdown em,
-    section[data-testid="stSidebar"] .stMarkdown i {{
+    section[data-testid="stSidebar"] .stMarkdown em {{
         color: {COLORS.text_secondary} !important;
     }}
-
-    /* Виджеты в сайдбаре */
     section[data-testid="stSidebar"] .stSelectbox > div > div,
     section[data-testid="stSidebar"] .stNumberInput > div > div > input,
     section[data-testid="stSidebar"] [data-baseweb="select"] > div {{
-        background-color: #141625 !important;
+        background-color: {COLORS.bg_card} !important;
         color: {COLORS.text_primary} !important;
-        border-color: #252840 !important;
+        border-color: #1F2740 !important;
     }}
-    section[data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"] {{
-        color: {COLORS.text_primary} !important;
-    }}
-
-    /* Кнопки в сайдбаре — золотой акцент */
     section[data-testid="stSidebar"] .stButton > button {{
-        background-color: {COLORS.yellow_kerria} !important;
-        color: {COLORS.bg_dark} !important;
+        background-color: {COLORS.blue_ultra} !important;
+        color: white !important;
         border: none !important;
-        border-radius: 8px;
+        border-radius: 6px;
         font-weight: 600;
     }}
     section[data-testid="stSidebar"] .stButton > button:hover {{
-        background-color: {COLORS.yellow_sun} !important;
+        background-color: {COLORS.blue_indigo} !important;
     }}
 
-    /* Expander в сайдбаре */
-    section[data-testid="stSidebar"] .streamlit-expanderHeader {{
-        color: {COLORS.text_primary} !important;
-        background-color: transparent !important;
-    }}
-
-    /* --- Хедер (градиент) --- */
+    /* --- Хедер --- */
     .aio-header {{
-        background: linear-gradient(135deg, {COLORS.bg_card} 0%, {COLORS.blue_navy} 100%);
+        background: {COLORS.bg_card};
         padding: 1.8rem 2.2rem;
-        border-radius: 12px;
+        border-radius: 10px;
         margin-bottom: 1.2rem;
-        border-left: 5px solid {COLORS.blue_indigo};
+        border: 1px solid rgba(255,255,255,0.06);
     }}
     .aio-header h1 {{
-        color: {COLORS.text_primary} !important;
+        color: {COLORS.red_crimson} !important;
         font-size: 1.6rem;
         font-weight: 700;
         margin: 0 0 0.3rem 0;
-        letter-spacing: 0.5px;
     }}
     .aio-header p {{
         color: {COLORS.text_secondary} !important;
@@ -215,22 +196,21 @@ CUSTOM_CSS = f"""
         margin: 0;
     }}
 
-    /* --- Карточки (приподнятый слой) --- */
+    /* --- Карточки --- */
     .aio-card {{
         background: {COLORS.bg_card};
         border-radius: 10px;
         padding: 1.2rem 1.4rem;
         border: 1px solid rgba(255,255,255,0.06);
-        box-shadow: 0 2px 12px rgba(0,0,0,0.4);
         margin-bottom: 0.8rem;
     }}
     .aio-card h3 {{
-        color: {COLORS.blue_indigo} !important;
-        font-size: 0.85rem;
+        color: {COLORS.text_secondary} !important;
+        font-size: 0.8rem;
         font-weight: 600;
         margin: 0 0 0.5rem 0;
         text-transform: uppercase;
-        letter-spacing: 0.4px;
+        letter-spacing: 0.5px;
     }}
     .aio-card .value {{
         font-size: 2rem;
@@ -243,17 +223,17 @@ CUSTOM_CSS = f"""
         background: {COLORS.green_deep};
         color: white !important;
         padding: 3px 10px;
-        border-radius: 6px;
-        font-size: 0.8rem;
+        border-radius: 4px;
+        font-size: 0.78rem;
         font-weight: 600;
         display: inline-block;
     }}
     .badge-yellow {{
         background: {COLORS.yellow_kerria};
-        color: {COLORS.bg_dark} !important;
+        color: #0B0F19 !important;
         padding: 3px 10px;
-        border-radius: 6px;
-        font-size: 0.8rem;
+        border-radius: 4px;
+        font-size: 0.78rem;
         font-weight: 600;
         display: inline-block;
     }}
@@ -261,25 +241,25 @@ CUSTOM_CSS = f"""
         background: {COLORS.red_crimson};
         color: white !important;
         padding: 3px 10px;
-        border-radius: 6px;
-        font-size: 0.8rem;
+        border-radius: 4px;
+        font-size: 0.78rem;
         font-weight: 600;
         display: inline-block;
     }}
 
-    /* --- Всплывающие пояснения --- */
+    /* --- Tooltips --- */
     .aio-tooltip {{
-        background: {COLORS.bg_dark};
+        background: {COLORS.bg_card};
         color: {COLORS.text_primary};
-        border-radius: 10px;
+        border-radius: 8px;
         padding: 1.2rem 1.4rem;
         font-size: 0.88rem;
         line-height: 1.5;
-        border-left: 4px solid {COLORS.blue_indigo};
+        border-left: 3px solid {COLORS.blue_indigo};
         margin: 0.5rem 0;
     }}
     .aio-tooltip .tooltip-title {{
-        color: {COLORS.yellow_kerria} !important;
+        color: {COLORS.blue_indigo} !important;
         font-weight: 700;
         font-size: 0.92rem;
         margin-bottom: 0.4rem;
@@ -290,14 +270,14 @@ CUSTOM_CSS = f"""
 
     /* --- Подвал --- */
     .aio-footer {{
-        background: {COLORS.bg_dark};
+        background: {COLORS.bg_card};
         color: {COLORS.text_secondary};
         text-align: center;
-        padding: 1.5rem;
-        border-radius: 12px;
+        padding: 1.2rem;
+        border-radius: 10px;
         margin-top: 2rem;
         font-size: 0.82rem;
-        border-top: 2px solid {COLORS.blue_indigo};
+        border: 1px solid rgba(255,255,255,0.06);
     }}
     .aio-footer div {{
         color: {COLORS.text_secondary} !important;
@@ -311,64 +291,58 @@ CUSTOM_CSS = f"""
     .stTabs [data-baseweb="tab-list"] {{
         gap: 0;
         background: {COLORS.bg_card};
-        border-radius: 10px;
+        border-radius: 8px;
         padding: 4px;
+        border: 1px solid rgba(255,255,255,0.06);
     }}
     .stTabs [data-baseweb="tab"] {{
-        border-radius: 8px;
-        padding: 8px 18px;
+        border-radius: 6px;
+        padding: 8px 16px;
         font-weight: 500;
         color: {COLORS.text_secondary} !important;
     }}
     .stTabs [aria-selected="true"] {{
-        background: {COLORS.blue_indigo} !important;
-        color: white !important;
+        background: rgba(91,156,246,0.15) !important;
+        color: {COLORS.blue_indigo} !important;
     }}
 
-    /* --- Кнопки primary --- */
+    /* --- Кнопки --- */
     .stButton > button[kind="primary"],
     .stDownloadButton > button {{
-        background-color: {COLORS.blue_indigo} !important;
-        border-color: {COLORS.blue_indigo} !important;
+        background-color: {COLORS.blue_ultra} !important;
+        border-color: {COLORS.blue_ultra} !important;
         color: white !important;
+        border-radius: 6px;
     }}
     .stButton > button[kind="primary"]:hover,
     .stDownloadButton > button:hover {{
-        background-color: {COLORS.blue_ultra} !important;
-        border-color: {COLORS.blue_ultra} !important;
+        background-color: {COLORS.blue_indigo} !important;
     }}
 
-    /* --- st.dataframe --- */
-    .stDataFrame, [data-testid="stDataFrame"] {{
-        background: {COLORS.bg_card} !important;
-        border-radius: 10px;
-    }}
-
-    /* --- st.info / st.success / st.warning / st.error --- */
+    /* --- Alerts --- */
     .stAlert {{
         background-color: {COLORS.bg_card} !important;
-        border-radius: 10px;
-        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.06);
     }}
     .stAlert p {{
         color: {COLORS.text_primary} !important;
     }}
 
-    /* --- st.expander --- */
+    /* --- Expander --- */
     .streamlit-expanderHeader {{
         color: {COLORS.text_primary} !important;
         background-color: {COLORS.bg_card} !important;
         border-radius: 8px;
     }}
     .streamlit-expanderContent {{
-        background-color: #141625 !important;
-        border: 1px solid rgba(255,255,255,0.05);
+        background-color: {COLORS.bg_dark} !important;
     }}
 
-    /* --- Виджеты в основном контенте --- */
+    /* --- Widgets (main area) --- */
     [data-baseweb="select"] > div {{
         background-color: {COLORS.bg_card} !important;
-        border-color: #252840 !important;
+        border-color: #1F2740 !important;
         color: {COLORS.text_primary} !important;
     }}
     [data-baseweb="popover"] > div,
@@ -379,7 +353,7 @@ CUSTOM_CSS = f"""
         color: {COLORS.text_primary} !important;
     }}
     [data-baseweb="menu"] li:hover {{
-        background-color: #252840 !important;
+        background-color: #1F2740 !important;
     }}
     .stCheckbox label span {{
         color: {COLORS.text_primary} !important;
@@ -387,7 +361,13 @@ CUSTOM_CSS = f"""
     .stNumberInput > div > div > input {{
         background-color: {COLORS.bg_card} !important;
         color: {COLORS.text_primary} !important;
-        border-color: #252840 !important;
+        border-color: #1F2740 !important;
+    }}
+
+    /* --- DataFrame --- */
+    .stDataFrame, [data-testid="stDataFrame"] {{
+        background: {COLORS.bg_card} !important;
+        border-radius: 8px;
     }}
 
     /* --- Plotly --- */
@@ -395,30 +375,18 @@ CUSTOM_CSS = f"""
         background: transparent !important;
     }}
 
-    /* --- Footer Streamlit — скрыть --- */
+    /* --- Streamlit footer hide --- */
     footer {{
         visibility: hidden;
     }}
 
     /* --- Scrollbar --- */
-    ::-webkit-scrollbar {{
-        width: 8px;
-    }}
-    ::-webkit-scrollbar-track {{
-        background: {COLORS.bg_main};
-    }}
-    ::-webkit-scrollbar-thumb {{
-        background: #252840;
-        border-radius: 4px;
-    }}
-    ::-webkit-scrollbar-thumb:hover {{
-        background: {COLORS.gray_nezumi};
-    }}
+    ::-webkit-scrollbar {{ width: 6px; }}
+    ::-webkit-scrollbar-track {{ background: {COLORS.bg_main}; }}
+    ::-webkit-scrollbar-thumb {{ background: #1F2740; border-radius: 3px; }}
+    ::-webkit-scrollbar-thumb:hover {{ background: {COLORS.gray_nezumi}; }}
 
-    /* --- Разделители --- */
-    hr {{
-        border-color: rgba(255,255,255,0.08) !important;
-    }}
+    hr {{ border-color: rgba(255,255,255,0.06) !important; }}
 </style>
 """
 
