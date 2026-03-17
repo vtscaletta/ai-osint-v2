@@ -114,24 +114,77 @@ COLORS = WashokuPalette()
 
 CUSTOM_CSS = f"""
 <style>
+    /* ===================================================
+       AI-OSINT v2.0 — CSS-тема 和色 (Streamlit 1.55+)
+       =================================================== */
+
     /* --- Общий фон и шрифт --- */
     .stApp {{
-        background-color: {COLORS.bg_main};
+        background-color: {COLORS.bg_main} !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                      "Noto Sans", "Helvetica Neue", Arial, sans-serif;
         color: {COLORS.text_primary};
     }}
 
-    /* --- Боковая панель --- */
+    /* --- Боковая панель (тёмная — 墨色) --- */
     section[data-testid="stSidebar"] {{
-        background-color: {COLORS.bg_dark};
+        background-color: {COLORS.bg_dark} !important;
     }}
-    section[data-testid="stSidebar"] * {{
+    section[data-testid="stSidebar"] > div {{
+        background-color: {COLORS.bg_dark} !important;
+    }}
+
+    /* Текст в сайдбаре — светлый */
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] .stMarkdown,
+    section[data-testid="stSidebar"] .stMarkdown p,
+    section[data-testid="stSidebar"] .stMarkdown li,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3 {{
         color: {COLORS.bg_main} !important;
     }}
+
+    /* Подписи слайдеров и селекторов — серебристые */
+    section[data-testid="stSidebar"] .stSlider label,
     section[data-testid="stSidebar"] .stSelectbox label,
-    section[data-testid="stSidebar"] .stSlider label {{
+    section[data-testid="stSidebar"] .stNumberInput label,
+    section[data-testid="stSidebar"] .stRadio label {{
         color: {COLORS.gray_silver} !important;
+    }}
+
+    /* Виджеты внутри сайдбара — тёмные */
+    section[data-testid="stSidebar"] .stSelectbox > div > div,
+    section[data-testid="stSidebar"] .stNumberInput > div > div > input,
+    section[data-testid="stSidebar"] [data-baseweb="select"] > div {{
+        background-color: #1E1E1E !important;
+        color: {COLORS.bg_main} !important;
+        border-color: #3A3A3A !important;
+    }}
+
+    /* Слайдер — акцентный индиго */
+    section[data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"],
+    section[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] div {{
+        color: {COLORS.bg_main} !important;
+    }}
+
+    /* Expander внутри сайдбара */
+    section[data-testid="stSidebar"] .streamlit-expanderHeader {{
+        color: {COLORS.bg_main} !important;
+        background-color: transparent !important;
+    }}
+
+    /* Кнопки в сайдбаре */
+    section[data-testid="stSidebar"] .stButton > button {{
+        background-color: {COLORS.blue_indigo} !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px;
+        font-weight: 600;
+    }}
+    section[data-testid="stSidebar"] .stButton > button:hover {{
+        background-color: {COLORS.blue_ultra} !important;
     }}
 
     /* --- Хедер (используется через st.markdown) --- */
@@ -143,14 +196,14 @@ CUSTOM_CSS = f"""
         border-left: 5px solid {COLORS.blue_indigo};
     }}
     .aio-header h1 {{
-        color: {COLORS.bg_main};
+        color: {COLORS.bg_main} !important;
         font-size: 1.6rem;
         font-weight: 700;
         margin: 0 0 0.3rem 0;
         letter-spacing: 0.5px;
     }}
     .aio-header p {{
-        color: {COLORS.gray_silver};
+        color: {COLORS.gray_silver} !important;
         font-size: 0.85rem;
         margin: 0;
     }}
@@ -165,7 +218,7 @@ CUSTOM_CSS = f"""
         margin-bottom: 0.8rem;
     }}
     .aio-card h3 {{
-        color: {COLORS.blue_navy};
+        color: {COLORS.blue_navy} !important;
         font-size: 0.85rem;
         font-weight: 600;
         margin: 0 0 0.5rem 0;
@@ -175,33 +228,36 @@ CUSTOM_CSS = f"""
     .aio-card .value {{
         font-size: 2rem;
         font-weight: 700;
-        color: {COLORS.text_primary};
+        color: {COLORS.text_primary} !important;
     }}
 
     /* --- Светофорные бейджи --- */
     .badge-green {{
         background: {COLORS.green_deep};
-        color: white;
+        color: white !important;
         padding: 3px 10px;
         border-radius: 6px;
         font-size: 0.8rem;
         font-weight: 600;
+        display: inline-block;
     }}
     .badge-yellow {{
         background: {COLORS.yellow_kerria};
-        color: {COLORS.text_primary};
+        color: {COLORS.text_primary} !important;
         padding: 3px 10px;
         border-radius: 6px;
         font-size: 0.8rem;
         font-weight: 600;
+        display: inline-block;
     }}
     .badge-red {{
         background: {COLORS.red_crimson};
-        color: white;
+        color: white !important;
         padding: 3px 10px;
         border-radius: 6px;
         font-size: 0.8rem;
         font-weight: 600;
+        display: inline-block;
     }}
 
     /* --- Всплывающие пояснения --- */
@@ -216,10 +272,13 @@ CUSTOM_CSS = f"""
         margin: 0.5rem 0;
     }}
     .aio-tooltip .tooltip-title {{
-        color: {COLORS.yellow_kerria};
+        color: {COLORS.yellow_kerria} !important;
         font-weight: 700;
         font-size: 0.92rem;
         margin-bottom: 0.4rem;
+    }}
+    .aio-tooltip p, .aio-tooltip div {{
+        color: {COLORS.bg_main} !important;
     }}
 
     /* --- Подвал --- */
@@ -232,8 +291,11 @@ CUSTOM_CSS = f"""
         margin-top: 2rem;
         font-size: 0.82rem;
     }}
+    .aio-footer div {{
+        color: {COLORS.gray_silver} !important;
+    }}
     .aio-footer a {{
-        color: {COLORS.blue_indigo};
+        color: {COLORS.blue_indigo} !important;
         text-decoration: none;
     }}
 
@@ -255,14 +317,45 @@ CUSTOM_CSS = f"""
         color: white !important;
     }}
 
-    /* --- Plotly-контейнеры (через st.plotly_chart) --- */
+    /* --- Основные кнопки (primary) --- */
+    .stButton > button[kind="primary"] {{
+        background-color: {COLORS.blue_indigo} !important;
+        border-color: {COLORS.blue_indigo} !important;
+        color: white !important;
+    }}
+    .stButton > button[kind="primary"]:hover {{
+        background-color: {COLORS.blue_ultra} !important;
+        border-color: {COLORS.blue_ultra} !important;
+    }}
+
+    /* --- Plotly-контейнеры --- */
     .js-plotly-plot .plotly .main-svg {{
         background: transparent !important;
+    }}
+
+    /* --- st.info / st.success / st.error — сохраняем читаемость --- */
+    .stAlert p {{
+        color: inherit !important;
     }}
 
     /* --- Убрать дефолтный footer Streamlit --- */
     footer {{
         visibility: hidden;
+    }}
+
+    /* --- Scrollbar стилизация (webkit) --- */
+    ::-webkit-scrollbar {{
+        width: 8px;
+    }}
+    ::-webkit-scrollbar-track {{
+        background: {COLORS.bg_main};
+    }}
+    ::-webkit-scrollbar-thumb {{
+        background: {COLORS.gray_silver};
+        border-radius: 4px;
+    }}
+    ::-webkit-scrollbar-thumb:hover {{
+        background: {COLORS.gray_nezumi};
     }}
 </style>
 """
