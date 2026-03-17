@@ -941,4 +941,4 @@ def generate_report(
     _draw_methodology_note(pdf)
 
     # ── Выгрузка в bytes ──
-    return pdf.output()
+    return bytes(pdf.output())
