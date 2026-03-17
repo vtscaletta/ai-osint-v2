@@ -985,8 +985,5 @@ def generate_report(
     # ── 6. Методологическая справка ──
     _draw_methodology_note(pdf)
 
-    # ── 7. Значимость исследования ──
-    _draw_significance(pdf)
-
     # ── Выгрузка в bytes ──
     return bytes(pdf.output())
