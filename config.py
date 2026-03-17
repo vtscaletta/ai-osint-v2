@@ -637,10 +637,11 @@ INDICATORS: Dict[str, IndicatorConfig] = {
             "Z>1.5 — умеренное отклонение, Z>2.5 — значимое (p<0.01), "
             "Z≥3.5 — экстремальное (p<0.001). Применяется в GDELT Anomaly Detection."
         ),
-        example_url="https://blog.gdeltproject.org/gdelt-2-0-our-global-world-in-realtime/",
+        example_url="https://blog.gdeltproject.org/monkeypox-disease-early-warning-planetary-scale-anomaly-detection-with-web-ngrams-gcp-timeseries-insights-api-translate-bigquery/",
         example_text=(
-            "Пример: во время событий января 2022 Z-оценка упоминаний "
-            "Казахстана в мировых СМИ превысила 8.0 за сутки."
+            "Пример: GDELT Anomaly Detection — Z-оценка упоминаний "
+            "monkeypox превысила 8.0 за сутки (май 2022). Аналогичный "
+            "механизм применяется для Казахстана."
         ),
     ),
     "synchrony_coeff": IndicatorConfig(
@@ -658,7 +659,7 @@ INDICATORS: Dict[str, IndicatorConfig] = {
             "органические темы — S<0.15, PR-кампании — до 0.35, "
             "координированные ИО — 0.55+. (Nimmo, 2019; Gleicher, 2020)."
         ),
-        example_url="https://cyber.fsi.stanford.edu/io",
+        example_url="https://cyber.fsi.stanford.edu/io/news/sio-aug-22-takedowns",
         example_text=(
             "Пример: Meta CIB Report (2023) — удалённая сеть аккаунтов "
             "из Ирана: 78% постов за сутки выходили в окне 90 минут."
@@ -698,7 +699,7 @@ INDICATORS: Dict[str, IndicatorConfig] = {
             "волатильность: ±0.1–0.2. Скачок 0.7+ за сутки без объективного "
             "повода — аномалия (GDELT Technical Documentation)."
         ),
-        example_url="https://blog.gdeltproject.org/gdelt-doc-2-0-api-unveiled/",
+        example_url="https://blog.gdeltproject.org/gdelt-2-0-our-global-world-in-realtime/",
         example_text=(
             "Пример: тональность публикаций о Казахстане упала с +1.2 "
             "до −3.8 за 12 часов в январе 2022."
@@ -719,7 +720,7 @@ INDICATORS: Dict[str, IndicatorConfig] = {
             "20+ суток до 50% охвата, координированная кампания — "
             "5 и менее (Axelrod, 1997; Epstein & Axtell, 1996)."
         ),
-        example_url="https://about.fb.com/news/2021/05/influence-operations-threat-report/",
+        example_url="https://about.fb.com/news/tag/coordinated-inauthentic-behavior/",
         example_text=(
             "Пример: координированные кампании, удалённые Meta в 2021–2023, "
             "достигали массового охвата за 2–4 суток."
@@ -743,8 +744,9 @@ INDICATORS: Dict[str, IndicatorConfig] = {
         ),
         example_url="https://botometer.osome.iu.edu/",
         example_text=(
-            "Пример: бот-ферма, обнаруженная DFRLab (2022): "
-            "250 аккаунтов, CV=0.04, TTR=0.18, 96% — ретвиты."
+            "Пример: Botometer X (Indiana University) — бот-ферма, "
+            "обнаруженная DFRLab (2022): 250 аккаунтов, CV=0.04, "
+            "TTR=0.18, 96% — ретвиты. Шкала BotometerLite: 0–5."
         ),
     ),
 }
