@@ -38,6 +38,7 @@ from config import (
 from data_engine import (
     DataSnapshot, load_data, compute_moving_average,
     generate_digest, reliability_badge_html,
+    get_topic_distribution,
 )
 from abm_engine import (
     run_full_simulation, run_monte_carlo, MonteCarloResult,
@@ -558,6 +559,35 @@ with tabs[0]:
                 ))
                 _show_chart(fig_l, key="lang_pie")
 
+        # ── Тематический мониторинг (классификация Санжара) ──
+        st.subheader("Тематический мониторинг")
+        with st.expander("ℹ️ Что это?"):
+            st.markdown(render_tooltip(
+                "Тематическая классификация",
+                "Автоматическая категоризация загруженных статей по "
+                "чувствительным темам казахстанского информационного "
+                "пространства: межэтнические отношения, языковой вопрос, "
+                "региональный раскол, протестные настроения, геополитическое "
+                "давление, безопасность, репутация, энергетика.",
+            ), unsafe_allow_html=True)
+
+        if not snap.topics_df.empty:
+            fig_topics = go.Figure(go.Bar(
+                x=snap.topics_df["topic_label"],
+                y=snap.topics_df["count"],
+                marker_color=snap.topics_df["topic_color"],
+                text=[f"{s}%" for s in snap.topics_df["share"]],
+                textposition="outside",
+            ))
+            fig_topics.update_layout(**_plotly_layout(
+                title="Распределение по тематическим категориям",
+                yaxis_title="Количество статей",
+                height=400,
+            ))
+            _show_chart(fig_topics, key="topics_bar")
+        else:
+            st.caption("Нет данных для тематической классификации")
+
         # ── Дайджест ──
         st.subheader("Дайджест")
         col_d1, col_d2 = st.columns(2)
@@ -567,7 +597,11 @@ with tabs[0]:
                 format_func=lambda x: f"{x} дней",
             )
         with col_d2:
-            st.caption("Топ-10 наиболее «окрашенных» публикаций за период")
+            st.caption(
+                "Топ-10 статей с максимальной тональностью "
+                "(позитивной или негативной) — наиболее эмоционально "
+                "заряженные публикации за период"
+            )
 
         if not snap.articles_df.empty:
             digest = generate_digest(snap.articles_df, days=digest_days)
@@ -578,6 +612,14 @@ with tabs[0]:
                         COLORS.green_deep if tone_v > 1 else COLORS.gray_nezumi
                     )
                     rel_badge = reliability_badge_html(row.get("reliability", "unknown"))
+                    topic_lbl = row.get("topic_label", "")
+                    topic_clr = row.get("topic_color", COLORS.gray_nezumi)
+                    topic_html = (
+                        f' <span style="background:{topic_clr};color:#202124;'
+                        f'padding:1px 8px;border-radius:10px;font-size:0.68rem;'
+                        f'font-weight:600;">{topic_lbl}</span>'
+                        if topic_lbl and topic_lbl != "Прочее" else ""
+                    )
                     st.markdown(
                         f'<div class="aio-card" style="padding:0.7rem 1rem;">'
                         f'<div style="display:flex;justify-content:space-between;">'
@@ -590,7 +632,7 @@ with tabs[0]:
                         f'margin-top:3px;">'
                         f'{row.get("source_domain","")} | '
                         f'{row.get("lang_label","")} | '
-                        f'{rel_badge}</div></div>'
+                        f'{rel_badge}{topic_html}</div></div>'
                         f'<div style="text-align:right;min-width:60px;">'
                         f'<span style="color:{color};font-weight:700;'
                         f'font-size:1rem;">{tone_v:+.1f}</span></div>'
