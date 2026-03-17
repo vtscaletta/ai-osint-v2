@@ -867,8 +867,25 @@ def load_data(
             snapshot.volume_df = fetch_volume_timeline(query, days_back)
             snapshot.tone_df = fetch_tone_timeline(query, days_back)
             snapshot.countries_df = fetch_source_country_breakdown(query, days_back)
-            snapshot.languages_df = fetch_language_breakdown(query, days_back)
             snapshot.articles_df = fetch_articles_all_languages(query, days_back)
+
+            # Языковое распределение — считаем из уже загруженных статей,
+            # а не через отдельные API-запросы (экономим 14 запросов,
+            # избегаем 429 rate limit от GDELT)
+            if not snapshot.articles_df.empty and "lang_label" in snapshot.articles_df.columns:
+                lang_counts = snapshot.articles_df.groupby(
+                    ["lang_key", "lang_label"]
+                ).size().reset_index(name="count")
+                total = lang_counts["count"].sum()
+                lang_counts["share"] = (
+                    (lang_counts["count"] / total * 100).round(1) if total > 0 else 0.0
+                )
+                lang_counts = lang_counts.rename(columns={"lang_key": "language"})
+                lang_counts = lang_counts.sort_values("count", ascending=False).reset_index(drop=True)
+                snapshot.languages_df = lang_counts
+            else:
+                snapshot.languages_df = fetch_language_breakdown(query, days_back)
+
             snapshot.is_live = True
         except Exception as e:
             logger.error(f"Ошибка загрузки данных: {e}")
