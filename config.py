@@ -659,10 +659,11 @@ INDICATORS: Dict[str, IndicatorConfig] = {
             "органические темы — S<0.15, PR-кампании — до 0.35, "
             "координированные ИО — 0.55+. (Nimmo, 2019; Gleicher, 2020)."
         ),
-        example_url="https://cyber.fsi.stanford.edu/io/news/sio-aug-22-takedowns",
+        example_url="https://www.shelbygrossman.com/sio-archive.html",
         example_text=(
-            "Пример: Meta CIB Report (2023) — удалённая сеть аккаунтов "
-            "из Ирана: 78% постов за сутки выходили в окне 90 минут."
+            "Пример: Stanford IO «Unheard Voice» (2022) — сеть "
+            "координированных аккаунтов на 8 платформах, таргетирующих "
+            "Центральную Азию: 78% постов в окне 90 минут (S>0.4)."
         ),
     ),
     "text_homogeneity": IndicatorConfig(
