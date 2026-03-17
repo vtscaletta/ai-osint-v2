@@ -10,6 +10,7 @@ AI-OSINT — Главный интерфейс
     abm_engine.py   → АОМ + Марков + Монте-Карло
     indicators.py   → 6 индикаторов + Индекс угрозы + рекомендации
     library.py      → Библиотека результатов
+    report_gen.py   → Генерация PDF-отчёта
 
 Авторы:
     Абсаттаров Г.Р., к.полит.н., ассоц. проф.
@@ -51,6 +52,7 @@ from library import (
     ResultsLibrary, create_record, SimulationRecord,
     render_library_card, render_library_empty, render_library_stats,
 )
+from report_gen import generate_report
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -1225,11 +1227,22 @@ with tabs[6]:
 
         # Кнопка генерации
         if st.button("📄 Подготовить отчёт", type="primary", use_container_width=True):
-            st.info(
-                "🔧 Модуль генерации PDF-отчёта (report_gen.py) будет "
-                "подключён на этапе интеграции. Сейчас доступен экспорт "
-                "данных в JSON."
-            )
+            with st.spinner("Формирование PDF-отчёта..."):
+                try:
+                    pdf_bytes = generate_report(
+                        records=selected_records,
+                        report_date=datetime.now().strftime("%d.%m.%Y"),
+                    )
+                    st.success("Отчёт сформирован.")
+                    st.download_button(
+                        label="⬇️ Скачать PDF-отчёт",
+                        data=pdf_bytes,
+                        file_name=f"ai_osint_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                    )
+                except Exception as e:
+                    st.error(f"Ошибка генерации отчёта: {e}")
 
         # Экспорт JSON
         if st.button("📥 Экспорт JSON", use_container_width=True):
