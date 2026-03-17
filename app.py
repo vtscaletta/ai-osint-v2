@@ -1374,7 +1374,7 @@ with tabs[7]:
     """, unsafe_allow_html=True)
 
     # ── Теоретическая значимость ──
-    st.markdown(f"""
+    st.html(f"""
     <div class="aio-card">
         <h3>Теоретическая значимость</h3>
         <p style="line-height:1.7;">
@@ -1397,10 +1397,10 @@ with tabs[7]:
             но и оценивать вероятностные сценарии дальнейшей эскалации.
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # ── Социальная значимость ──
-    st.markdown(f"""
+    st.html(f"""
     <div class="aio-card">
         <h3>Социальная значимость</h3>
         <p style="line-height:1.7;">
@@ -1420,10 +1420,10 @@ with tabs[7]:
             общественной стабильности и информационной гигиены.
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # ── Политическая значимость ──
-    st.markdown(f"""
+    st.html(f"""
     <div class="aio-card">
         <h3>Политическая значимость</h3>
         <p style="line-height:1.7;">
@@ -1449,10 +1449,10 @@ with tabs[7]:
             аналитических решений в сфере искусственного интеллекта.
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # ── Возможности применения ──
-    st.markdown(f"""
+    st.html(f"""
     <div class="aio-card">
         <h3>Возможности применения</h3>
         <div style="line-height:1.8;">
@@ -1513,7 +1513,7 @@ with tabs[7]:
             изменения международного информационного образа страны.</span>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     # ── Источники ──
     st.markdown(f"""
