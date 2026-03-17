@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from config import GDELT, COLORS, SOURCE_RELIABILITY_LEVELS
+from config import GDELT, COLORS, SOURCE_RELIABILITY_LEVELS, NARRATIVE_TOPICS
 
 # ═══════════════════════════════════════════════════════════════════
 # Логирование
@@ -204,7 +204,7 @@ def fetch_articles(
 def fetch_articles_all_languages(
     query: str = GDELT.query_term,
     days_back: int = GDELT.default_days_back,
-    max_per_lang: int = 50,
+    max_per_lang: int = 75,
 ) -> pd.DataFrame:
     """
     Собирает статьи по всем 7 языкам и возвращает объединённый DataFrame.
@@ -667,6 +667,90 @@ def compute_volume_anomaly(volume_df: pd.DataFrame, ma_window: int = 30) -> Dict
 
 
 # ═══════════════════════════════════════════════════════════════════
+# 6b. КЛАССИФИКАЦИЯ СТАТЕЙ ПО ТЕМАТИЧЕСКИМ КАТЕГОРИЯМ
+# ═══════════════════════════════════════════════════════════════════
+
+def classify_articles_by_topic(
+    articles_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Размечает каждую статью по тематической категории Санжара.
+
+    Классификация rule-based: проверяет заголовок статьи на наличие
+    ключевых слов из NARRATIVE_TOPICS (config.py). Если совпадение
+    найдено — присваивается категория. Если нет — «Прочее».
+
+    Параметры:
+        articles_df: DataFrame с колонкой «title»
+
+    Возвращает:
+        DataFrame с добавленными колонками:
+            topic_key (str), topic_label (str), topic_color (str)
+    """
+    if articles_df.empty or "title" not in articles_df.columns:
+        return articles_df
+
+    df = articles_df.copy()
+    topic_keys = []
+    topic_labels = []
+    topic_colors = []
+
+    for _, row in df.iterrows():
+        title = str(row.get("title", "")).lower()
+        matched = False
+
+        for topic_key, topic_cfg in NARRATIVE_TOPICS.items():
+            if topic_key == "other":
+                continue
+            for kw in topic_cfg["keywords"]:
+                if kw.lower() in title:
+                    topic_keys.append(topic_key)
+                    topic_labels.append(topic_cfg["label_ru"])
+                    topic_colors.append(topic_cfg["color"])
+                    matched = True
+                    break
+            if matched:
+                break
+
+        if not matched:
+            other = NARRATIVE_TOPICS["other"]
+            topic_keys.append("other")
+            topic_labels.append(other["label_ru"])
+            topic_colors.append(other["color"])
+
+    df["topic_key"] = topic_keys
+    df["topic_label"] = topic_labels
+    df["topic_color"] = topic_colors
+
+    return df
+
+
+def get_topic_distribution(articles_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Распределение статей по тематическим категориям.
+
+    Возвращает DataFrame:
+        topic_key, topic_label, topic_color, count, share
+    """
+    if articles_df.empty or "topic_key" not in articles_df.columns:
+        return pd.DataFrame(columns=[
+            "topic_key", "topic_label", "topic_color", "count", "share",
+        ])
+
+    counts = articles_df.groupby(
+        ["topic_key", "topic_label", "topic_color"]
+    ).size().reset_index(name="count")
+
+    total = counts["count"].sum()
+    counts["share"] = (
+        (counts["count"] / total * 100).round(1) if total > 0 else 0.0
+    )
+    counts = counts.sort_values("count", ascending=False).reset_index(drop=True)
+
+    return counts
+
+
+# ═══════════════════════════════════════════════════════════════════
 # 7. ГЕНЕРАТОР ДАЙДЖЕСТА
 # ═══════════════════════════════════════════════════════════════════
 
@@ -839,6 +923,7 @@ class DataSnapshot:
     anomaly: Dict[str, float] = field(default_factory=dict)
     tonal_shift: float = 0.0
     synchrony: float = 0.0
+    topics_df: pd.DataFrame = field(default_factory=lambda: pd.DataFrame())
     is_live: bool = False       # True = живые данные, False = демо
     timestamp: str = ""
     error_msg: str = ""
@@ -887,6 +972,12 @@ def load_data(
                 snapshot.languages_df = fetch_language_breakdown(query, days_back)
 
             snapshot.is_live = True
+
+            # Тематическая классификация загруженных статей
+            if not snapshot.articles_df.empty:
+                snapshot.articles_df = classify_articles_by_topic(snapshot.articles_df)
+                snapshot.topics_df = get_topic_distribution(snapshot.articles_df)
+
         except Exception as e:
             logger.error(f"Ошибка загрузки данных: {e}")
             snapshot.error_msg = str(e)
