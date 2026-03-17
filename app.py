@@ -1000,16 +1000,17 @@ with tabs[3]:
                 "«затуханием» (нарратив сначала растёт, потом снижается).",
             ), unsafe_allow_html=True)
 
-        peak_dist = mc_res.peak_distribution
+        peak_dist = np.asarray(mc_res.peak_distribution, dtype=np.float64)
         peak_labels = [MARKOV_STATES[i]["name_ru"] for i in range(4)]
         peak_colors = [
             markov_colors[MARKOV_STATE_ORDER[i]] for i in range(4)
         ]
+        peak_pct = peak_dist[:4] * 100
         fig_peak = go.Figure(go.Bar(
             x=peak_labels,
-            y=peak_dist[:4] * 100,
+            y=peak_pct,
             marker_color=peak_colors,
-            text=[f"{v:.1f}%" for v in peak_dist[:4] * 100],
+            text=[f"{v:.1f}%" for v in peak_pct],
             textposition="outside",
         ))
         fig_peak.update_layout(**_plotly_layout(
@@ -1032,14 +1033,15 @@ with tabs[3]:
                 "(включая фазу затухания), и распределение отличается.",
             ), unsafe_allow_html=True)
 
-        final_dist = mc_res.final_state_distribution
+        final_dist = np.asarray(mc_res.final_state_distribution, dtype=np.float64)
         final_labels = [MARKOV_STATES[i]["name_ru"] for i in range(5)]
         final_colors = [
             markov_colors[MARKOV_STATE_ORDER[i]] for i in range(5)
         ]
+        final_pct = final_dist * 100
         fig_final = go.Figure(go.Pie(
             labels=final_labels,
-            values=final_dist * 100,
+            values=final_pct,
             hole=0.45,
             marker=dict(colors=final_colors),
             textinfo="label+percent",
