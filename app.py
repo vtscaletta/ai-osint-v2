@@ -1100,16 +1100,12 @@ with tabs[4]:
                         unsafe_allow_html=True,
                     )
                     with st.expander("🔍 Подробнее"):
-                        st.markdown(
-                            render_indicator_detail(ind),
-                            unsafe_allow_html=True,
-                        )
+                        st.html(render_indicator_detail(ind))
 
         # ── Рекомендации ──
-        st.markdown(
-            render_recommendations(det.recommendations),
-            unsafe_allow_html=True,
-        )
+        rec_html = render_recommendations(det.recommendations)
+        if rec_html:
+            st.html(rec_html)
 
         # ── Кнопка сохранения в библиотеку ──
         st.divider()
