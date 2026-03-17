@@ -74,20 +74,21 @@ def _hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
 
 
-# Предвычисленные RGB-кортежи из палитры 和色
-_C_BG_MAIN    = _hex_to_rgb(COLORS.bg_main)        # Молочно-белый
-_C_BG_CARD    = _hex_to_rgb(COLORS.bg_card)         # Слоновая кость
-_C_BG_DARK    = _hex_to_rgb(COLORS.bg_dark)         # Чернильный
-_C_NAVY       = _hex_to_rgb(COLORS.blue_navy)       # Тёмно-синий
-_C_INDIGO     = _hex_to_rgb(COLORS.blue_indigo)     # Индиго
-_C_ULTRA      = _hex_to_rgb(COLORS.blue_ultra)      # Ультрамарин
-_C_GREEN      = _hex_to_rgb(COLORS.green_deep)      # Вечнозелёный
-_C_YELLOW     = _hex_to_rgb(COLORS.yellow_kerria)   # Керрия
-_C_RED        = _hex_to_rgb(COLORS.red_crimson)      # Алый
-_C_GRAY       = _hex_to_rgb(COLORS.gray_nezumi)     # Мышиный серый
-_C_SILVER     = _hex_to_rgb(COLORS.gray_silver)     # Серебристый
-_C_TEXT       = _hex_to_rgb(COLORS.text_primary)     # Основной текст
-_C_TEXT2      = _hex_to_rgb(COLORS.text_secondary)   # Вторичный текст
+# Предвычисленные RGB-кортежи — PDF ВСЕГДА на белом фоне,
+# поэтому текстовые цвета фиксированы, не из палитры UI.
+_C_BG_MAIN    = _hex_to_rgb(COLORS.bg_main)
+_C_BG_CARD    = (245, 245, 248)               # Светлый фон карточек PDF
+_C_BG_DARK    = _hex_to_rgb(COLORS.bg_dark)
+_C_NAVY       = (30, 42, 69)                   # Тёмно-синий заголовки
+_C_INDIGO     = _hex_to_rgb(COLORS.blue_indigo)
+_C_ULTRA      = _hex_to_rgb(COLORS.blue_ultra)
+_C_GREEN      = _hex_to_rgb(COLORS.green_deep)
+_C_YELLOW     = _hex_to_rgb(COLORS.yellow_kerria)
+_C_RED        = _hex_to_rgb(COLORS.red_crimson)
+_C_GRAY       = (120, 120, 130)                # Вторичный текст PDF
+_C_SILVER     = (170, 170, 180)
+_C_TEXT       = (30, 30, 35)                    # Основной текст — ЧЁРНЫЙ
+_C_TEXT2      = (100, 100, 110)                 # Вторичный — тёмно-серый
 _C_WHITE      = (255, 255, 255)
 
 
