@@ -103,21 +103,51 @@ _FONT_PATHS = {
 }
 
 
+def _download_font(url: str, path: str) -> bool:
+    """Скачивает шрифт по URL, если файл не существует."""
+    if os.path.exists(path):
+        return True
+    try:
+        import urllib.request
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        urllib.request.urlretrieve(url, path)
+        return os.path.exists(path)
+    except Exception:
+        return False
+
+
+# URL-ы DejaVu на GitHub (официальный релиз)
+_DEJAVU_BASE = "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/"
+_DEJAVU_URLS = {
+    "regular": _DEJAVU_BASE + "DejaVuSans.ttf",
+    "bold":    _DEJAVU_BASE + "DejaVuSans-Bold.ttf",
+    "italic":  _DEJAVU_BASE + "DejaVuSans-Oblique.ttf",
+}
+_DEJAVU_LOCAL = {
+    "regular": "/tmp/fonts/DejaVuSans.ttf",
+    "bold":    "/tmp/fonts/DejaVuSans-Bold.ttf",
+    "italic":  "/tmp/fonts/DejaVuSans-Oblique.ttf",
+}
+
+
 def _register_fonts(pdf: FPDF) -> str:
     """
     Регистрирует TTF-шрифты с поддержкой кириллицы.
 
-    Возвращает имя семейства шрифтов для использования.
-    Если DejaVu недоступен, возвращает 'Helvetica' (встроенный,
-    без кириллицы — fallback для отладки).
+    Порядок поиска:
+        1. Системные пути (/usr/share/fonts)
+        2. /tmp/fonts (скачанные ранее)
+        3. Скачивание с GitHub
+        4. Helvetica (fallback без кириллицы)
     """
+    # Попытка 1: системные шрифты
     if os.path.exists(_FONT_PATHS["regular"]):
         pdf.add_font("DejaVu", "", _FONT_PATHS["regular"])
         pdf.add_font("DejaVu", "B", _FONT_PATHS["bold"])
         pdf.add_font("DejaVu", "I", _FONT_PATHS["italic"])
         return "DejaVu"
 
-    # Fallback: поиск в типичных директориях
+    # Попытка 2: поиск в системе
     for search_dir in ["/usr/share/fonts", "/usr/local/share/fonts"]:
         for root, _dirs, files in os.walk(search_dir):
             for f in files:
@@ -132,7 +162,20 @@ def _register_fonts(pdf: FPDF) -> str:
                         pdf.add_font("DejaVu", "I", italic_path)
                     return "DejaVu"
 
-    # Крайний fallback — без кириллицы
+    # Попытка 3: скачивание с GitHub
+    all_ok = True
+    for key in ["regular", "bold", "italic"]:
+        if not _download_font(_DEJAVU_URLS[key], _DEJAVU_LOCAL[key]):
+            all_ok = False
+            break
+
+    if all_ok and os.path.exists(_DEJAVU_LOCAL["regular"]):
+        pdf.add_font("DejaVu", "", _DEJAVU_LOCAL["regular"])
+        pdf.add_font("DejaVu", "B", _DEJAVU_LOCAL["bold"])
+        pdf.add_font("DejaVu", "I", _DEJAVU_LOCAL["italic"])
+        return "DejaVu"
+
+    # Крайний fallback
     return "Helvetica"
 
 
