@@ -50,7 +50,7 @@ from config import (
     AGENT_TYPES,
     SCENARIOS,
     MARKOV_STATES,
-    BASE_TRANSITION_MATRIX,
+    MARKOV_BASE_MATRIX,
     ABM_DEFAULTS,
     INDICATOR_THRESHOLDS,
 )
@@ -549,7 +549,7 @@ class MarkovNarrative:
             )
         self.state: int = initial_state
         self.trajectory: List[int] = [initial_state]
-        self.base_matrix: np.ndarray = BASE_TRANSITION_MATRIX.copy()
+        self.base_matrix: np.ndarray = MARKOV_BASE_MATRIX.copy()
 
     # ──────── динамическая матрица ────────
 
@@ -819,7 +819,7 @@ class MonteCarloEngine:
                 size=(MarkovNarrative.N_STATES, MarkovNarrative.N_STATES),
             )
             markov.base_matrix = np.clip(
-                BASE_TRANSITION_MATRIX + noise_matrix,
+                MARKOV_BASE_MATRIX + noise_matrix,
                 0.001, None,
             )
             # Нормализация строк после шума
