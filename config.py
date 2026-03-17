@@ -19,54 +19,52 @@ import numpy as np
 
 @dataclass(frozen=True)
 class WashokuPalette:
-    """Профессиональная аналитическая палитра — тёмно-синяя тема.
+    """Палитра в стиле Google Material Dark.
     
-    Стиль: Bloomberg / аналитические дашборды.
-    Три слоя:
-        Слой 0 (фон):     #0B0F19 — глубокий тёмно-синий
-        Слой 1 (карточки): #151A2D — приподнятые панели
-        Слой 2 (sidebar):  #0D1120 — навигация
+    Фон:      #202124 (тёмно-серый, НЕ чёрный)
+    Карточки: #303134 (приподнятый слой)
+    Sidebar:  #171717 (глубокий)
+    Акцент:   #8AB4F8 (Google Blue)
     """
 
-    # --- Фоны (3 слоя глубины) ---
-    bg_main: str = "#0B0F19"        # Основной фон — глубокий тёмно-синий
-    bg_card: str = "#151A2D"        # Карточки, панели — чуть светлее
-    bg_dark: str = "#0D1120"        # Sidebar, footer, tooltips
+    # --- Фоны ---
+    bg_main: str = "#202124"        # Основной фон — Google Dark
+    bg_card: str = "#303134"        # Карточки — приподнятый
+    bg_dark: str = "#171717"        # Sidebar, tooltips
 
-    # --- Синие (навигация, акценты) ---
-    blue_indigo: str = "#5B9CF6"    # Основной акцент — небесно-синий
-    blue_ultra: str = "#3B82F6"     # Hover / активный
-    blue_navy: str = "#1E2A45"      # Тёмный синий (фон хедера)
+    # --- Синие ---
+    blue_indigo: str = "#8AB4F8"    # Google Blue — основной акцент
+    blue_ultra: str = "#669DF6"     # Hover
+    blue_navy: str = "#394457"      # Тёмный синий (вкладки)
 
-    # --- Красные (аномалия, опасность) ---
-    red_crimson: str = "#EF5350"    # Красный — тревога
-    red_rouge: str = "#D32F2F"      # Тёмный красный
-    red_beni: str = "#FF7043"       # Коралловый (графики)
+    # --- Красные ---
+    red_crimson: str = "#F28B82"    # Google Red
+    red_rouge: str = "#E06666"      # Тёмный красный
+    red_beni: str = "#F6AEA9"       # Светлый красный
 
-    # --- Зелёные (норма, успех) ---
-    green_deep: str = "#4CAF50"     # Зелёный — норма
-    green_bamboo: str = "#66BB6A"   # Светлый зелёный
-    green_wasabi: str = "#388E3C"   # Тёмный зелёный
+    # --- Зелёные ---
+    green_deep: str = "#81C995"     # Google Green
+    green_bamboo: str = "#A8DAB5"   # Светлый зелёный
+    green_wasabi: str = "#5BB974"   # Тёмный зелёный
 
-    # --- Жёлтые / Оранжевые ---
-    yellow_kerria: str = "#FFB300"  # Золотой — предупреждение
-    yellow_sun: str = "#FFD54F"     # Светлый жёлтый
-    orange_kaki: str = "#FF9800"    # Оранжевый
-    orange_daidai: str = "#FFA726"  # Янтарный
+    # --- Жёлтые ---
+    yellow_kerria: str = "#FDD663"  # Google Yellow
+    yellow_sun: str = "#FDE293"     # Светлый
+    orange_kaki: str = "#FCAD70"    # Google Orange
+    orange_daidai: str = "#FBA85C"  # Янтарный
 
     # --- Фиолетовые ---
-    purple_murasaki: str = "#9575CD"
-    purple_edo: str = "#7E57C2"
+    purple_murasaki: str = "#D7AEFB"
+    purple_edo: str = "#B388FF"
 
     # --- Серые ---
-    gray_nezumi: str = "#8892A7"    # Вторичный текст
-    gray_silver: str = "#A8B2C1"    # Подписи, метки
+    gray_nezumi: str = "#9AA0A6"    # Google secondary text
+    gray_silver: str = "#BDC1C6"    # Подписи
 
     # --- Текст ---
-    text_primary: str = "#E8ECF1"   # Основной — почти белый
-    text_secondary: str = "#8892A7" # Вторичный — приглушённый
+    text_primary: str = "#E8EAED"   # Основной — Google light
+    text_secondary: str = "#9AA0A6" # Вторичный — Google secondary
 
-    # --- Светофорная система ---
     @property
     def traffic_green(self) -> str:
         return self.green_deep
@@ -79,7 +77,6 @@ class WashokuPalette:
     def traffic_red(self) -> str:
         return self.red_crimson
 
-    # --- Цвета агентов ---
     @property
     def agent_colors(self) -> Dict[str, str]:
         return {
@@ -89,7 +86,6 @@ class WashokuPalette:
             "recipient":  self.gray_silver,
         }
 
-    # --- Цвета состояний Маркова ---
     @property
     def markov_colors(self) -> Dict[str, str]:
         return {
@@ -100,7 +96,6 @@ class WashokuPalette:
             "declining": self.blue_indigo,
         }
 
-    # --- Круговые диаграммы ---
     @property
     def pie_sequence(self) -> List[str]:
         return [
@@ -122,20 +117,29 @@ COLORS = WashokuPalette()
 CUSTOM_CSS = f"""
 <style>
     /* ===================================================
-       AI-OSINT v2.0 — Тёмно-синяя аналитическая тема
+       AI-OSINT v2.0 — Google Material Dark
+       Фон #202124 | Карточки #303134 | Акцент #8AB4F8
        =================================================== */
 
     .stApp {{
         background-color: {COLORS.bg_main} !important;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                     "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+        font-family: "Google Sans", -apple-system, BlinkMacSystemFont,
+                     "Segoe UI", Roboto, sans-serif;
         color: {COLORS.text_primary} !important;
+        font-size: 16px !important;
     }}
-    .stApp p, .stApp span, .stApp label, .stApp li,
-    .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+    .stApp p, .stApp li,
     .stApp .stMarkdown p {{
         color: {COLORS.text_primary} !important;
+        font-size: 1rem !important;
+        line-height: 1.65 !important;
     }}
+    .stApp span, .stApp label {{
+        color: {COLORS.text_primary} !important;
+    }}
+    .stApp h1 {{ color: {COLORS.text_primary} !important; font-size: 1.7rem !important; }}
+    .stApp h2 {{ color: {COLORS.text_primary} !important; font-size: 1.4rem !important; }}
+    .stApp h3 {{ color: {COLORS.text_primary} !important; font-size: 1.15rem !important; }}
 
     /* --- Sidebar --- */
     section[data-testid="stSidebar"],
@@ -154,6 +158,7 @@ CUSTOM_CSS = f"""
     section[data-testid="stSidebar"] .stSelectbox label,
     section[data-testid="stSidebar"] .stNumberInput label {{
         color: {COLORS.gray_silver} !important;
+        font-size: 0.9rem !important;
     }}
     section[data-testid="stSidebar"] .stMarkdown em {{
         color: {COLORS.text_secondary} !important;
@@ -163,86 +168,89 @@ CUSTOM_CSS = f"""
     section[data-testid="stSidebar"] [data-baseweb="select"] > div {{
         background-color: {COLORS.bg_card} !important;
         color: {COLORS.text_primary} !important;
-        border-color: #1F2740 !important;
+        border-color: #3C4043 !important;
+        font-size: 0.95rem !important;
     }}
     section[data-testid="stSidebar"] .stButton > button {{
-        background-color: {COLORS.blue_ultra} !important;
-        color: white !important;
+        background-color: {COLORS.blue_indigo} !important;
+        color: #202124 !important;
         border: none !important;
-        border-radius: 6px;
+        border-radius: 20px;
         font-weight: 600;
+        font-size: 0.9rem !important;
+        padding: 0.5rem 1.2rem !important;
     }}
     section[data-testid="stSidebar"] .stButton > button:hover {{
-        background-color: {COLORS.blue_indigo} !important;
+        background-color: {COLORS.blue_ultra} !important;
     }}
 
     /* --- Хедер --- */
     .aio-header {{
         background: {COLORS.bg_card};
         padding: 1.8rem 2.2rem;
-        border-radius: 10px;
+        border-radius: 12px;
         margin-bottom: 1.2rem;
-        border: 1px solid rgba(255,255,255,0.06);
+        border: 1px solid #3C4043;
     }}
     .aio-header h1 {{
-        color: {COLORS.red_crimson} !important;
-        font-size: 1.6rem;
-        font-weight: 700;
-        margin: 0 0 0.3rem 0;
+        color: {COLORS.blue_indigo} !important;
+        font-size: 1.7rem !important;
+        font-weight: 500;
+        margin: 0 0 0.4rem 0;
     }}
     .aio-header p {{
         color: {COLORS.text_secondary} !important;
-        font-size: 0.85rem;
+        font-size: 0.92rem !important;
         margin: 0;
     }}
 
     /* --- Карточки --- */
     .aio-card {{
         background: {COLORS.bg_card};
-        border-radius: 10px;
-        padding: 1.2rem 1.4rem;
-        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
+        padding: 1.3rem 1.5rem;
+        border: 1px solid #3C4043;
         margin-bottom: 0.8rem;
     }}
     .aio-card h3 {{
         color: {COLORS.text_secondary} !important;
-        font-size: 0.8rem;
-        font-weight: 600;
+        font-size: 0.85rem !important;
+        font-weight: 500;
         margin: 0 0 0.5rem 0;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }}
     .aio-card .value {{
-        font-size: 2rem;
-        font-weight: 700;
+        font-size: 2.2rem !important;
+        font-weight: 500;
         color: {COLORS.text_primary} !important;
     }}
 
-    /* --- Светофорные бейджи --- */
+    /* --- Бейджи --- */
     .badge-green {{
         background: {COLORS.green_deep};
-        color: white !important;
-        padding: 3px 10px;
-        border-radius: 4px;
-        font-size: 0.78rem;
+        color: #202124 !important;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.82rem !important;
         font-weight: 600;
         display: inline-block;
     }}
     .badge-yellow {{
         background: {COLORS.yellow_kerria};
-        color: #0B0F19 !important;
-        padding: 3px 10px;
-        border-radius: 4px;
-        font-size: 0.78rem;
+        color: #202124 !important;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.82rem !important;
         font-weight: 600;
         display: inline-block;
     }}
     .badge-red {{
         background: {COLORS.red_crimson};
-        color: white !important;
-        padding: 3px 10px;
-        border-radius: 4px;
-        font-size: 0.78rem;
+        color: #202124 !important;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.82rem !important;
         font-weight: 600;
         display: inline-block;
     }}
@@ -251,18 +259,19 @@ CUSTOM_CSS = f"""
     .aio-tooltip {{
         background: {COLORS.bg_card};
         color: {COLORS.text_primary};
-        border-radius: 8px;
-        padding: 1.2rem 1.4rem;
-        font-size: 0.88rem;
-        line-height: 1.5;
+        border-radius: 12px;
+        padding: 1.3rem 1.5rem;
+        font-size: 0.92rem !important;
+        line-height: 1.6;
         border-left: 3px solid {COLORS.blue_indigo};
         margin: 0.5rem 0;
+        border: 1px solid #3C4043;
     }}
     .aio-tooltip .tooltip-title {{
         color: {COLORS.blue_indigo} !important;
-        font-weight: 700;
-        font-size: 0.92rem;
-        margin-bottom: 0.4rem;
+        font-weight: 600;
+        font-size: 1rem !important;
+        margin-bottom: 0.5rem;
     }}
     .aio-tooltip p, .aio-tooltip div {{
         color: {COLORS.text_primary} !important;
@@ -273,11 +282,11 @@ CUSTOM_CSS = f"""
         background: {COLORS.bg_card};
         color: {COLORS.text_secondary};
         text-align: center;
-        padding: 1.2rem;
-        border-radius: 10px;
+        padding: 1.3rem;
+        border-radius: 12px;
         margin-top: 2rem;
-        font-size: 0.82rem;
-        border: 1px solid rgba(255,255,255,0.06);
+        font-size: 0.88rem !important;
+        border: 1px solid #3C4043;
     }}
     .aio-footer div {{
         color: {COLORS.text_secondary} !important;
@@ -289,44 +298,49 @@ CUSTOM_CSS = f"""
 
     /* --- Вкладки --- */
     .stTabs [data-baseweb="tab-list"] {{
-        gap: 0;
+        gap: 2px;
         background: {COLORS.bg_card};
-        border-radius: 8px;
+        border-radius: 12px;
         padding: 4px;
-        border: 1px solid rgba(255,255,255,0.06);
+        border: 1px solid #3C4043;
     }}
     .stTabs [data-baseweb="tab"] {{
-        border-radius: 6px;
-        padding: 8px 16px;
+        border-radius: 8px;
+        padding: 10px 18px;
         font-weight: 500;
+        font-size: 0.9rem !important;
         color: {COLORS.text_secondary} !important;
     }}
     .stTabs [aria-selected="true"] {{
-        background: rgba(91,156,246,0.15) !important;
-        color: {COLORS.blue_indigo} !important;
+        background: {COLORS.blue_indigo} !important;
+        color: #202124 !important;
+        font-weight: 600;
     }}
 
     /* --- Кнопки --- */
     .stButton > button[kind="primary"],
     .stDownloadButton > button {{
-        background-color: {COLORS.blue_ultra} !important;
-        border-color: {COLORS.blue_ultra} !important;
-        color: white !important;
-        border-radius: 6px;
+        background-color: {COLORS.blue_indigo} !important;
+        border-color: {COLORS.blue_indigo} !important;
+        color: #202124 !important;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem !important;
     }}
     .stButton > button[kind="primary"]:hover,
     .stDownloadButton > button:hover {{
-        background-color: {COLORS.blue_indigo} !important;
+        background-color: {COLORS.blue_ultra} !important;
     }}
 
     /* --- Alerts --- */
     .stAlert {{
         background-color: {COLORS.bg_card} !important;
-        border-radius: 8px;
-        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
+        border: 1px solid #3C4043;
     }}
     .stAlert p {{
         color: {COLORS.text_primary} !important;
+        font-size: 0.95rem !important;
     }}
 
     /* --- Expander --- */
@@ -334,15 +348,16 @@ CUSTOM_CSS = f"""
         color: {COLORS.text_primary} !important;
         background-color: {COLORS.bg_card} !important;
         border-radius: 8px;
+        font-size: 0.95rem !important;
     }}
     .streamlit-expanderContent {{
         background-color: {COLORS.bg_dark} !important;
     }}
 
-    /* --- Widgets (main area) --- */
+    /* --- Widgets --- */
     [data-baseweb="select"] > div {{
         background-color: {COLORS.bg_card} !important;
-        border-color: #1F2740 !important;
+        border-color: #3C4043 !important;
         color: {COLORS.text_primary} !important;
     }}
     [data-baseweb="popover"] > div,
@@ -351,9 +366,10 @@ CUSTOM_CSS = f"""
     }}
     [data-baseweb="menu"] li {{
         color: {COLORS.text_primary} !important;
+        font-size: 0.92rem !important;
     }}
     [data-baseweb="menu"] li:hover {{
-        background-color: #1F2740 !important;
+        background-color: #3C4043 !important;
     }}
     .stCheckbox label span {{
         color: {COLORS.text_primary} !important;
@@ -361,13 +377,13 @@ CUSTOM_CSS = f"""
     .stNumberInput > div > div > input {{
         background-color: {COLORS.bg_card} !important;
         color: {COLORS.text_primary} !important;
-        border-color: #1F2740 !important;
+        border-color: #3C4043 !important;
     }}
 
     /* --- DataFrame --- */
     .stDataFrame, [data-testid="stDataFrame"] {{
         background: {COLORS.bg_card} !important;
-        border-radius: 8px;
+        border-radius: 12px;
     }}
 
     /* --- Plotly --- */
@@ -375,18 +391,13 @@ CUSTOM_CSS = f"""
         background: transparent !important;
     }}
 
-    /* --- Streamlit footer hide --- */
-    footer {{
-        visibility: hidden;
-    }}
+    footer {{ visibility: hidden; }}
 
-    /* --- Scrollbar --- */
-    ::-webkit-scrollbar {{ width: 6px; }}
+    ::-webkit-scrollbar {{ width: 8px; }}
     ::-webkit-scrollbar-track {{ background: {COLORS.bg_main}; }}
-    ::-webkit-scrollbar-thumb {{ background: #1F2740; border-radius: 3px; }}
+    ::-webkit-scrollbar-thumb {{ background: #3C4043; border-radius: 4px; }}
     ::-webkit-scrollbar-thumb:hover {{ background: {COLORS.gray_nezumi}; }}
-
-    hr {{ border-color: rgba(255,255,255,0.06) !important; }}
+    hr {{ border-color: #3C4043 !important; }}
 </style>
 """
 
