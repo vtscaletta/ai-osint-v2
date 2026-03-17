@@ -1148,9 +1148,9 @@ with tabs[5]:
     lib = ResultsLibrary()
 
     if lib.is_empty:
-        st.markdown(render_library_empty(), unsafe_allow_html=True)
+        st.html(render_library_empty())
     else:
-        st.markdown(render_library_stats(lib), unsafe_allow_html=True)
+        st.html(render_library_stats(lib))
 
         records = lib.get_all()
         selected_ids: list = []
@@ -1158,10 +1158,7 @@ with tabs[5]:
         for rec in records:
             col_card, col_actions = st.columns([5, 1])
             with col_card:
-                st.markdown(
-                    render_library_card(rec),
-                    unsafe_allow_html=True,
-                )
+                st.html(render_library_card(rec))
             with col_actions:
                 cb = st.checkbox(
                     "📋",
