@@ -143,8 +143,14 @@ def _register_fonts(pdf: FPDF) -> str:
     # Попытка 1: системные шрифты
     if os.path.exists(_FONT_PATHS["regular"]):
         pdf.add_font("DejaVu", "", _FONT_PATHS["regular"])
-        pdf.add_font("DejaVu", "B", _FONT_PATHS["bold"])
-        pdf.add_font("DejaVu", "I", _FONT_PATHS["italic"])
+        if os.path.exists(_FONT_PATHS["bold"]):
+            pdf.add_font("DejaVu", "B", _FONT_PATHS["bold"])
+        else:
+            pdf.add_font("DejaVu", "B", _FONT_PATHS["regular"])
+        if os.path.exists(_FONT_PATHS["italic"]):
+            pdf.add_font("DejaVu", "I", _FONT_PATHS["italic"])
+        else:
+            pdf.add_font("DejaVu", "I", _FONT_PATHS["regular"])
         return "DejaVu"
 
     # Попытка 2: поиск в системе
@@ -155,11 +161,9 @@ def _register_fonts(pdf: FPDF) -> str:
                     base = root
                     pdf.add_font("DejaVu", "", os.path.join(base, "DejaVuSans.ttf"))
                     bold_path = os.path.join(base, "DejaVuSans-Bold.ttf")
-                    if os.path.exists(bold_path):
-                        pdf.add_font("DejaVu", "B", bold_path)
+                    pdf.add_font("DejaVu", "B", bold_path if os.path.exists(bold_path) else os.path.join(base, "DejaVuSans.ttf"))
                     italic_path = os.path.join(base, "DejaVuSans-Oblique.ttf")
-                    if os.path.exists(italic_path):
-                        pdf.add_font("DejaVu", "I", italic_path)
+                    pdf.add_font("DejaVu", "I", italic_path if os.path.exists(italic_path) else os.path.join(base, "DejaVuSans.ttf"))
                     return "DejaVu"
 
     # Попытка 3: скачивание с GitHub
