@@ -390,17 +390,38 @@ with tabs[0]:
         m1, m2, m3, m4 = st.columns(4)
         with m1:
             # Последняя ненулевая точка timeline
-            # (сегодня и вчера могут быть 0 из-за задержки GDELT)
             vol_val = 0
+            vol_label = "Последние полные сутки"
             if not snap.volume_df.empty:
                 nonzero = snap.volume_df[snap.volume_df["volume"] > 0]
                 if not nonzero.empty:
                     vol_val = int(nonzero["volume"].iloc[-1])
+
+            # Fallback: если timeline пустой, но статьи есть —
+            # считаем количество статей за вчера из articles_df
+            if vol_val == 0 and not snap.articles_df.empty and "date" in snap.articles_df.columns:
+                try:
+                    from datetime import datetime, timedelta
+                    yesterday = datetime.utcnow().date() - timedelta(days=1)
+                    yesterday_articles = snap.articles_df[
+                        snap.articles_df["date"].dt.date == yesterday
+                    ]
+                    if not yesterday_articles.empty:
+                        vol_val = len(yesterday_articles)
+                        vol_label = "За вчера (из статей)"
+                    else:
+                        # Все статьи за весь период
+                        vol_val = len(snap.articles_df)
+                        vol_label = f"Всего за {days_back} дней"
+                except Exception:
+                    vol_val = len(snap.articles_df)
+                    vol_label = f"Всего за {days_back} дней"
+
             st.markdown(
                 render_metric_card(
                     "Публикации о Казахстане",
                     f"{int(vol_val):,}".replace(",", " "),
-                    f"Последние полные сутки | MA30: {snap.anomaly.get('ma30', 0):.0f}",
+                    f"{vol_label} | MA30: {snap.anomaly.get('ma30', 0):.0f}",
                 ),
                 unsafe_allow_html=True,
             )
@@ -600,17 +621,23 @@ with tabs[0]:
         st.caption(
             "Топ-10 публикаций с максимальной тональностью "
             "(позитивной или негативной) за весь загруженный период. "
-            "Тональность по шкале GDELT: от −10 до +10."
+            "Если тональность не определена — показаны самые свежие статьи. "
+            "Шкала GDELT: от −10 до +10."
         )
 
         if not snap.articles_df.empty:
-            # Берём топ-10 по |тональности| из всего периода, без фильтра по дате
+            # Берём топ-10 по |тональности| из всего периода
             digest_df = snap.articles_df.copy()
-            # Убираем статьи с tone=0 — GDELT ещё не проанализировал их
-            digest_df = digest_df[digest_df["tone"].abs() > 0.05]
-            digest_df["abs_tone"] = digest_df["tone"].abs()
-            digest_df = digest_df.sort_values("abs_tone", ascending=False).head(10)
-            digest_df = digest_df.drop(columns=["abs_tone"])
+            scored = digest_df[digest_df["tone"].abs() > 0.05]
+
+            if not scored.empty:
+                # Есть статьи с тональностью — сортируем по |tone|
+                scored["abs_tone"] = scored["tone"].abs()
+                digest_df = scored.sort_values("abs_tone", ascending=False).head(10)
+                digest_df = digest_df.drop(columns=["abs_tone"])
+            else:
+                # Все tone=0 — показываем 10 самых свежих по дате
+                digest_df = digest_df.head(10)
 
             if not digest_df.empty:
                 for _, row in digest_df.iterrows():
