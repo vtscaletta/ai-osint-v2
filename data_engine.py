@@ -207,38 +207,60 @@ def fetch_articles_all_languages(
     max_per_lang: int = 75,
 ) -> pd.DataFrame:
     """
-    Собирает статьи по всем 7 языкам и возвращает объединённый DataFrame.
+    Загружает статьи ОДНИМ запросом без фильтра по языку,
+    затем маппит язык из поля «language» ответа GDELT.
 
-    Возвращает DataFrame с колонками:
-        url, title, source_domain, source_country, language,
-        tone, date, image_url, reliability, lang_label
+    Один запрос вместо семи → экономия 30 секунд и 6 rate-limit слотов.
+    Язык определяется GDELT автоматически (поле sourcelang в ответе).
     """
-    all_articles = []
+    # Один запрос — все языки, максимум записей
+    articles = fetch_articles(
+        query=query,
+        days_back=days_back,
+        lang=None,  # БЕЗ фильтра по языку
+        max_records=min(max_per_lang * 7, 250),  # GDELT max = 250
+        sort="DateDesc",
+    )
 
-    for lang_key, lang_code in GDELT.lang_codes.items():
-        articles = fetch_articles(
-            query=query,
-            days_back=days_back,
-            lang=lang_code,
-            max_records=max_per_lang,
-        )
-        lang_label = GDELT.languages[lang_key]
-        for art in articles:
-            art["lang_key"] = lang_key
-            art["lang_label"] = lang_label
-            art["reliability"] = classify_source_reliability(art["source_domain"])
-        all_articles.extend(articles)
-
-    if not all_articles:
+    if not articles:
         return _empty_articles_df()
 
-    df = pd.DataFrame(all_articles)
+    # Обратный маппинг: GDELT language name → наш lang_key
+    _LANG_MAP = {}
+    for lang_key, lang_code in GDELT.lang_codes.items():
+        # GDELT возвращает полные названия: "English", "Russian", etc.
+        _LANG_MAP[lang_code] = lang_key
+        _LANG_MAP[lang_key] = lang_key
+        # Также маппим по полному имени
+        label = GDELT.languages.get(lang_key, "")
+        if label:
+            _LANG_MAP[label.lower()] = lang_key
 
-    # Дедупликация по URL — GDELT возвращает одну статью
-    # для нескольких языковых запросов
+    for art in articles:
+        # Определяем lang_key из поля language
+        raw_lang = str(art.get("language", "")).lower().strip()
+        lang_key = _LANG_MAP.get(raw_lang, None)
+
+        # Если не нашли точный матч — ищем по подстроке
+        if not lang_key:
+            for code, key in _LANG_MAP.items():
+                if code in raw_lang or raw_lang in code:
+                    lang_key = key
+                    break
+
+        if not lang_key:
+            lang_key = "english"  # fallback
+
+        art["lang_key"] = lang_key
+        art["lang_label"] = GDELT.languages.get(lang_key, raw_lang.capitalize())
+        art["reliability"] = classify_source_reliability(art["source_domain"])
+
+    df = pd.DataFrame(articles)
+
+    # Дедупликация по URL
     df = df.drop_duplicates(subset=["url"], keep="first")
 
-    # Парсинг даты (GDELT формат: "YYYYMMDDTHHMMSS" или подобный)
+    # Парсинг даты
     df["date"] = pd.to_datetime(df["date"], errors="coerce", utc=True)
     df = df.dropna(subset=["date"])
     df = df.sort_values("date", ascending=False).reset_index(drop=True)
@@ -1047,4 +1069,91 @@ def _fill_fallback(snapshot: DataSnapshot, days_back: int) -> None:
     snapshot.tone_df = generate_fallback_tone(days_back)
     snapshot.countries_df = generate_fallback_countries()
     snapshot.languages_df = generate_fallback_languages()
+    snapshot.articles_df = generate_fallback_articles()
+    # Тематическая классификация демо-статей
+    snapshot.articles_df = classify_articles_by_topic(snapshot.articles_df)
+    snapshot.topics_df = get_topic_distribution(snapshot.articles_df)
     snapshot.is_live = False
+
+
+def generate_fallback_articles() -> pd.DataFrame:
+    """Демо-статьи для полной картины в fallback-режиме."""
+    from config import NARRATIVE_TOPICS
+    now = datetime.utcnow()
+
+    demo_articles = [
+        {"title": "Kazakhstan adopts new constitutional amendments in national referendum",
+         "source_domain": "reuters.com", "source_country": "United States",
+         "language": "English", "tone": 1.8, "days_ago": 1},
+        {"title": "Chevron и ExxonMobil остаются ключевыми партнерами Казахстана в нефтегазовых проектах",
+         "source_domain": "inform.kz", "source_country": "Kazakhstan",
+         "language": "Russian", "tone": 2.1, "days_ago": 2},
+        {"title": "Казахстан мен Қытай арасындағы сауда айналымы рекордтық деңгейге жетті",
+         "source_domain": "kazinform.kz", "source_country": "Kazakhstan",
+         "language": "Kazakh", "tone": 1.5, "days_ago": 3},
+        {"title": "Protests erupt in Almaty over proposed land reform legislation",
+         "source_domain": "bbc.com", "source_country": "United Kingdom",
+         "language": "English", "tone": -3.2, "days_ago": 4},
+        {"title": "Southern Branch of Middle Corridor gains Eurasian connectivity momentum",
+         "source_domain": "eurasianet.org", "source_country": "United States",
+         "language": "English", "tone": 1.2, "days_ago": 5},
+        {"title": "Россия усиливает информационное давление на Центральную Азию",
+         "source_domain": "meduza.io", "source_country": "Russia",
+         "language": "Russian", "tone": -2.8, "days_ago": 6},
+        {"title": "Le Kazakhstan approuve la nouvelle Constitution par référendum",
+         "source_domain": "france24.com", "source_country": "France",
+         "language": "French", "tone": 0.9, "days_ago": 1},
+        {"title": "哈萨克斯坦通过新宪法草案",
+         "source_domain": "xinhuanet.com", "source_country": "China",
+         "language": "Chinese", "tone": 0.4, "days_ago": 2},
+        {"title": "كازاخستان تعتمد تعديلات دستورية جديدة",
+         "source_domain": "aljazeera.com", "source_country": "Qatar",
+         "language": "Arabic", "tone": 0.6, "days_ago": 3},
+        {"title": "Kazajistán aprueba nueva constitución en referéndum nacional",
+         "source_domain": "elpais.com", "source_country": "Spain",
+         "language": "Spanish", "tone": 0.7, "days_ago": 2},
+        {"title": "Uranium exports from Kazakhstan hit record high amid global energy transition",
+         "source_domain": "ft.com", "source_country": "United Kingdom",
+         "language": "English", "tone": 1.6, "days_ago": 7},
+        {"title": "Ethnic tensions discussed at parliamentary session in Astana",
+         "source_domain": "tengrinews.kz", "source_country": "Kazakhstan",
+         "language": "English", "tone": -1.4, "days_ago": 8},
+        {"title": "Kazakh language policy debate intensifies in northern regions",
+         "source_domain": "vlast.kz", "source_country": "Kazakhstan",
+         "language": "English", "tone": -1.9, "days_ago": 5},
+        {"title": "Investment climate in Kazakhstan improves according to World Bank report",
+         "source_domain": "bloomberg.com", "source_country": "United States",
+         "language": "English", "tone": 2.5, "days_ago": 4},
+        {"title": "Security forces neutralize extremist cell in southern Kazakhstan",
+         "source_domain": "apnews.com", "source_country": "United States",
+         "language": "English", "tone": -2.1, "days_ago": 9},
+        {"title": "Геополитическое давление на Казахстан усиливается на фоне санкций",
+         "source_domain": "kommersant.ru", "source_country": "Russia",
+         "language": "Russian", "tone": -1.7, "days_ago": 6},
+        {"title": "Kazakhstan pipeline deal strengthens energy transit corridor",
+         "source_domain": "scmp.com", "source_country": "China",
+         "language": "English", "tone": 1.3, "days_ago": 10},
+        {"title": "Human rights concerns raised at UN session on Central Asia",
+         "source_domain": "theguardian.com", "source_country": "United Kingdom",
+         "language": "English", "tone": -2.4, "days_ago": 7},
+    ]
+
+    rows = []
+    for art in demo_articles:
+        rows.append({
+            "url": f"https://{art['source_domain']}/demo-{hash(art['title']) % 10000}",
+            "title": art["title"],
+            "source_domain": art["source_domain"],
+            "source_country": art["source_country"],
+            "language": art["language"],
+            "tone": art["tone"],
+            "date": (now - timedelta(days=art["days_ago"])).strftime("%Y%m%dT%H%M%S"),
+            "image_url": "",
+            "lang_key": art["language"].lower()[:3],
+            "lang_label": art["language"],
+            "reliability": classify_source_reliability(art["source_domain"]),
+        })
+
+    df = pd.DataFrame(rows)
+    df["date"] = pd.to_datetime(df["date"], errors="coerce", utc=True)
+    return df
