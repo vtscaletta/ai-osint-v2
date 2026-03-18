@@ -389,17 +389,18 @@ with tabs[0]:
         # ── Карточки метрик ──
         m1, m2, m3, m4 = st.columns(4)
         with m1:
-            # Показываем вчерашний объём (полные сутки UTC),
-            # т.к. сегодняшний день GDELT ещё не проиндексировал
-            if not snap.volume_df.empty and len(snap.volume_df) >= 2:
-                vol_val = int(snap.volume_df["volume"].iloc[-2])
-            else:
-                vol_val = snap.anomaly.get("current_volume", 0)
+            # Последняя ненулевая точка timeline
+            # (сегодня и вчера могут быть 0 из-за задержки GDELT)
+            vol_val = 0
+            if not snap.volume_df.empty:
+                nonzero = snap.volume_df[snap.volume_df["volume"] > 0]
+                if not nonzero.empty:
+                    vol_val = int(nonzero["volume"].iloc[-1])
             st.markdown(
                 render_metric_card(
-                    "Публикации о Казахстане (вчера)",
+                    "Публикации о Казахстане",
                     f"{int(vol_val):,}".replace(",", " "),
-                    f"Скользящее среднее за 30 дней: {snap.anomaly.get('ma30', 0):.0f}",
+                    f"Последние полные сутки | MA30: {snap.anomaly.get('ma30', 0):.0f}",
                 ),
                 unsafe_allow_html=True,
             )
@@ -605,6 +606,8 @@ with tabs[0]:
         if not snap.articles_df.empty:
             # Берём топ-10 по |тональности| из всего периода, без фильтра по дате
             digest_df = snap.articles_df.copy()
+            # Убираем статьи с tone=0 — GDELT ещё не проанализировал их
+            digest_df = digest_df[digest_df["tone"].abs() > 0.05]
             digest_df["abs_tone"] = digest_df["tone"].abs()
             digest_df = digest_df.sort_values("abs_tone", ascending=False).head(10)
             digest_df = digest_df.drop(columns=["abs_tone"])
