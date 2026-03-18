@@ -234,6 +234,10 @@ def fetch_articles_all_languages(
 
     df = pd.DataFrame(all_articles)
 
+    # Дедупликация по URL — GDELT возвращает одну статью
+    # для нескольких языковых запросов
+    df = df.drop_duplicates(subset=["url"], keep="first")
+
     # Парсинг даты (GDELT формат: "YYYYMMDDTHHMMSS" или подобный)
     df["date"] = pd.to_datetime(df["date"], errors="coerce", utc=True)
     df = df.dropna(subset=["date"])
@@ -490,9 +494,30 @@ _VERIFIED_DOMAINS = frozenset({
     "france24.com", "dw.com", "aljazeera.com", "theguardian.com",
     "nytimes.com", "washingtonpost.com", "ft.com", "economist.com",
     "lemonde.fr", "elpais.com", "asahi.com", "scmp.com",
+    "bloomberg.com", "cnbc.com", "cnn.com", "abc.net.au",
+    "news.sky.com", "independent.co.uk", "politico.eu",
+    "afp.com", "dpa.com", "ansa.it", "efe.com",
     # Казахстанские проверенные
-    "inform.kz", "kazinform.kz", "lsm.kz",
-    "vlast.kz", "forbes.kz", "kapital.kz",
+    "inform.kz", "kazinform.kz", "lsm.kz", "tengrinews.kz",
+    "vlast.kz", "forbes.kz", "kapital.kz", "kursiv.kz",
+    "zakon.kz", "nur.kz", "kt.kz", "kazpravda.kz",
+    "astanatimes.com", "qazaqtimes.com", "baigenews.kz",
+    "24.kz", "atameken.kz", "total.kz", "caravan.kz",
+    "astanatv.kz", "khabar.kz", "qazmonitor.com",
+    # Российские проверенные (не государственные)
+    "kommersant.ru", "vedomosti.ru", "rbc.ru", "novayagazeta.ru",
+    "meduza.io", "thebell.io", "fontanka.ru", "novayagazeta.eu",
+    # Турецкие
+    "dailysabah.com", "hurriyetdailynews.com", "aa.com.tr",
+    # Китайские (англоязычные)
+    "chinadaily.com.cn", "news.cgtn.com", "ecns.cn",
+    # Арабские
+    "arabnews.com", "gulfnews.com", "khaleejtimes.com",
+    # Центральноазиатские
+    "akipress.com", "eurasianet.org", "cabar.asia",
+    "thediplomat.com", "centralasiamonitor.org",
+    "azattyq.org", "azattyk.org", "ozodlik.org",
+    "asiaplustj.info",
 })
 
 _STATE_DOMAINS = frozenset({
@@ -951,8 +976,28 @@ def load_data(
         try:
             snapshot.volume_df = fetch_volume_timeline(query, days_back)
             snapshot.tone_df = fetch_tone_timeline(query, days_back)
-            snapshot.countries_df = fetch_source_country_breakdown(query, days_back)
             snapshot.articles_df = fetch_articles_all_languages(query, days_back)
+
+            # Страновое распределение — считаем из загруженных статей,
+            # а не через отдельный API-запрос TimelineSourceCountry
+            # (тот таймаутит на 35+ днях)
+            if not snapshot.articles_df.empty and "source_country" in snapshot.articles_df.columns:
+                country_counts = (
+                    snapshot.articles_df[snapshot.articles_df["source_country"] != ""]
+                    .groupby("source_country")
+                    .size()
+                    .reset_index(name="count")
+                    .sort_values("count", ascending=False)
+                    .reset_index(drop=True)
+                )
+                total_c = country_counts["count"].sum()
+                country_counts["share"] = (
+                    (country_counts["count"] / total_c * 100).round(1) if total_c > 0 else 0.0
+                )
+                country_counts = country_counts.rename(columns={"source_country": "country"})
+                snapshot.countries_df = country_counts
+            else:
+                snapshot.countries_df = fetch_source_country_breakdown(query, days_back)
 
             # Языковое распределение — считаем из уже загруженных статей,
             # а не через отдельные API-запросы (экономим 14 запросов,
