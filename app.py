@@ -389,12 +389,17 @@ with tabs[0]:
         # ── Карточки метрик ──
         m1, m2, m3, m4 = st.columns(4)
         with m1:
-            vol_val = snap.anomaly.get("current_volume", 0)
+            # Показываем вчерашний объём (полные сутки UTC),
+            # т.к. сегодняшний день GDELT ещё не проиндексировал
+            if not snap.volume_df.empty and len(snap.volume_df) >= 2:
+                vol_val = int(snap.volume_df["volume"].iloc[-2])
+            else:
+                vol_val = snap.anomaly.get("current_volume", 0)
             st.markdown(
                 render_metric_card(
-                    "Объём публикаций (сегодня)",
+                    "Публикации о Казахстане (вчера)",
                     f"{int(vol_val):,}".replace(",", " "),
-                    f"MA30: {snap.anomaly.get('ma30', 0):.0f}",
+                    f"Скользящее среднее за 30 дней: {snap.anomaly.get('ma30', 0):.0f}",
                 ),
                 unsafe_allow_html=True,
             )
@@ -425,9 +430,9 @@ with tabs[0]:
             n_articles = len(snap.articles_df) if not snap.articles_df.empty else 0
             st.markdown(
                 render_metric_card(
-                    "Статей загружено",
+                    "Статей из GDELT",
                     f"{n_articles}",
-                    f"7 языков × {days_back} дней",
+                    f"По запросу «Kazakhstan» за {days_back} дней, 7 языков",
                 ),
                 unsafe_allow_html=True,
             )
@@ -540,8 +545,9 @@ with tabs[0]:
                 st.markdown(render_tooltip(
                     "Языковое распределение",
                     "Распределение публикаций по 7 целевым языкам "
-                    "(6 ООН + казахский). Автоматическая группировка "
-                    "по BERTopic.",
+                    "(6 ООН + казахский). Язык определяется GDELT "
+                    "автоматически (точность ~90–95%). Агрегация по "
+                    "всем загруженным статьям.",
                 ), unsafe_allow_html=True)
 
             if not snap.languages_df.empty:
@@ -590,23 +596,21 @@ with tabs[0]:
 
         # ── Дайджест ──
         st.subheader("Дайджест")
-        col_d1, col_d2 = st.columns(2)
-        with col_d1:
-            digest_days = st.radio(
-                "Период", [3, 7], horizontal=True,
-                format_func=lambda x: f"{x} дней",
-            )
-        with col_d2:
-            st.caption(
-                "Топ-10 статей с максимальной тональностью "
-                "(позитивной или негативной) — наиболее эмоционально "
-                "заряженные публикации за период"
-            )
+        st.caption(
+            "Топ-10 публикаций с максимальной тональностью "
+            "(позитивной или негативной) за весь загруженный период. "
+            "Тональность по шкале GDELT: от −10 до +10."
+        )
 
         if not snap.articles_df.empty:
-            digest = generate_digest(snap.articles_df, days=digest_days)
-            if not digest.empty:
-                for _, row in digest.iterrows():
+            # Берём топ-10 по |тональности| из всего периода, без фильтра по дате
+            digest_df = snap.articles_df.copy()
+            digest_df["abs_tone"] = digest_df["tone"].abs()
+            digest_df = digest_df.sort_values("abs_tone", ascending=False).head(10)
+            digest_df = digest_df.drop(columns=["abs_tone"])
+
+            if not digest_df.empty:
+                for _, row in digest_df.iterrows():
                     tone_v = row.get("tone", 0)
                     color = COLORS.red_crimson if tone_v < -1 else (
                         COLORS.green_deep if tone_v > 1 else COLORS.gray_nezumi
@@ -620,6 +624,13 @@ with tabs[0]:
                         f'font-weight:600;">{topic_lbl}</span>'
                         if topic_lbl and topic_lbl != "Прочее" else ""
                     )
+                    # Дата публикации
+                    date_str = ""
+                    if "date" in row and pd.notna(row["date"]):
+                        try:
+                            date_str = f' | {pd.to_datetime(row["date"]).strftime("%d.%m.%Y")}'
+                        except Exception:
+                            pass
                     st.markdown(
                         f'<div class="aio-card" style="padding:0.7rem 1rem;">'
                         f'<div style="display:flex;justify-content:space-between;">'
@@ -630,8 +641,7 @@ with tabs[0]:
                         f'{row.get("title","—")}</a>'
                         f'<div style="font-size:0.75rem;color:{COLORS.text_secondary};'
                         f'margin-top:3px;">'
-                        f'{row.get("source_domain","")} | '
-                        f'{row.get("lang_label","")} | '
+                        f'{row.get("source_domain","")}{date_str} | '
                         f'{rel_badge}{topic_html}</div></div>'
                         f'<div style="text-align:right;min-width:60px;">'
                         f'<span style="color:{color};font-weight:700;'
@@ -640,7 +650,7 @@ with tabs[0]:
                         unsafe_allow_html=True,
                     )
             else:
-                st.caption("Нет данных за выбранный период.")
+                st.caption("Нет статей с ненулевой тональностью.")
 
 
 # ─────────────────────────────────────────────────────────────────
