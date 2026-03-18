@@ -770,11 +770,15 @@ NARRATIVE_TOPICS: Dict[str, Dict[str, Any]] = {
         "label_ru": "Межэтнические отношения",
         "color": "#EF5350",
         "keywords": [
-            "ethnic", "interethnic", "ethnicity", "racial",
+            "ethnic", "interethnic", "ethnicity", "racial", "minority",
             "этнич", "межэтнич", "национальн", "дискриминац",
             "этникалық", "ұлтаралық",
             "russian minority", "казахизац", "русскоязыч",
             "ущемлен", "притеснен",
+            "étnico", "minoría", "etnias",           # ES
+            "ethnique", "minorité", "discrimination", # FR
+            "عرقي", "أقلية",                          # AR
+            "民族", "少数民族",                          # ZH
         ],
     },
     "language": {
@@ -785,25 +789,37 @@ NARRATIVE_TOPICS: Dict[str, Dict[str, Any]] = {
             "русский язык", "языковой", "языковая политика",
             "мемлекеттік тіл", "тіл саясаты",
             "trilingual", "латиница", "latin script",
+            "política lingüística", "idioma",         # ES
+            "politique linguistique", "langue",       # FR
+            "لغة", "سياسة اللغة",                      # AR
+            "语言政策", "哈萨克语",                       # ZH
         ],
     },
     "regional": {
         "label_ru": "Региональный раскол",
         "color": "#FF7043",
         "keywords": [
-            "north kazakhstan", "separatis", "territorial",
+            "north kazakhstan", "separatis", "territorial", "border",
             "север казахстан", "раскол", "сепарат", "территориальн",
             "аймақтық", "бөлін",
+            "separatismo", "frontera",                # ES
+            "séparatisme", "frontière",               # FR
+            "انفصال", "حدود",                           # AR
+            "分裂", "领土",                              # ZH
         ],
     },
     "protest": {
         "label_ru": "Протестные настроения",
         "color": "#AB47BC",
         "keywords": [
-            "protest", "rally", "unrest", "riot", "uprising",
-            "протест", "митинг", "беспорядк", "волнени",
+            "protest", "rally", "unrest", "riot", "uprising", "demonstration",
+            "протест", "митинг", "беспорядк", "волнени", "столкновен",
             "наразылық", "шеру",
             "january events", "январск",
+            "protesta", "manifestación", "disturbios", # ES
+            "manifestation", "émeute",                 # FR
+            "احتجاج", "مظاهرة",                         # AR
+            "抗议", "示威", "骚乱",                       # ZH
         ],
     },
     "geopolitics": {
@@ -811,9 +827,13 @@ NARRATIVE_TOPICS: Dict[str, Dict[str, Any]] = {
         "color": "#5C6BC0",
         "keywords": [
             "sanctions", "geopolit", "influence", "pressure",
-            "sanctions against", "foreign interference",
+            "foreign interference", "diplomacy", "nato", "shanghai",
             "санкци", "геополитик", "давлени", "вмешательств",
             "геосаясат", "ықпал",
+            "sanciones", "geopolítica",               # ES
+            "géopolitique", "ingérence",              # FR
+            "عقوبات", "جيوسياسي",                      # AR
+            "制裁", "地缘政治",                          # ZH
         ],
     },
     "security": {
@@ -821,8 +841,13 @@ NARRATIVE_TOPICS: Dict[str, Dict[str, Any]] = {
         "color": "#78909C",
         "keywords": [
             "terror", "extremis", "security threat", "radicali",
-            "террор", "экстремиз", "радикализ", "безопасност",
+            "military", "weapon", "nuclear",
+            "террор", "экстремиз", "радикализ", "безопасност", "военн",
             "лаңкестік", "экстремизм",
+            "terrorismo", "seguridad", "armas",       # ES
+            "terrorisme", "sécurité",                 # FR
+            "إرهاب", "أمن", "تطرف",                    # AR
+            "恐怖主义", "安全",                          # ZH
         ],
     },
     "reputation": {
@@ -830,10 +855,14 @@ NARRATIVE_TOPICS: Dict[str, Dict[str, Any]] = {
         "color": "#4CAF50",
         "keywords": [
             "investment", "reputation", "human rights", "democracy",
-            "corruption", "freedom",
+            "corruption", "freedom", "reform", "election",
             "инвестиц", "репутац", "права человек", "коррупц",
-            "демократ", "свобод",
+            "демократ", "свобод", "реформ", "выбор",
             "инвестиция", "адам құқы",
+            "inversión", "derechos humanos", "corrupción", # ES
+            "investissement", "droits de l'homme",         # FR
+            "استثمار", "حقوق الإنسان", "فساد",              # AR
+            "投资", "人权", "腐败", "民主",                   # ZH
         ],
     },
     "energy": {
@@ -841,14 +870,19 @@ NARRATIVE_TOPICS: Dict[str, Dict[str, Any]] = {
         "color": "#26A69A",
         "keywords": [
             "oil", "gas", "pipeline", "transit", "uranium", "energy",
+            "crude", "petroleum", "lng",
             "нефт", "газ", "трубопровод", "транзит", "уран", "энерг",
-            "мұнай", "газ", "транзит",
+            "мұнай", "транзит",
+            "petróleo", "gasoducto", "energía",       # ES
+            "pétrole", "gazoduc", "énergie",          # FR
+            "نفط", "غاز", "طاقة", "أنبوب",             # AR
+            "石油", "天然气", "管道", "能源",              # ZH
         ],
     },
     "other": {
         "label_ru": "Прочее",
         "color": "#8892A7",
-        "keywords": [],  # Всё, что не попало в категории выше
+        "keywords": [],
     },
 }
 
