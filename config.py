@@ -1139,13 +1139,9 @@ def render_header() -> str:
 
 def render_footer() -> str:
     """HTML-блок подвала."""
-    authors_str = " &nbsp;|&nbsp; ".join(
-        f"{a['name']}, {a['title']}" for a in AUTHORS
-    )
     return f"""
     <div class="aio-footer">
-        <div style="margin-bottom: 0.4rem;">{authors_str}</div>
-        <div>{COPYRIGHT}</div>
+        <div>{APP_TITLE} &nbsp;|&nbsp; {UNIVERSITY} &nbsp;|&nbsp; {YEAR}</div>
     </div>
     """
 
