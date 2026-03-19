@@ -822,7 +822,7 @@ with tabs[1]:
             fig_graph.add_trace(go.Scatter(
                 x=edge_x, y=edge_y,
                 mode="lines",
-                line=dict(color="rgba(0,0,0,0.06)", width=0.5),
+                line=dict(color="rgba(255,255,255,0.15)", width=0.5),
                 hoverinfo="none",
                 showlegend=False,
             ))
