@@ -74,21 +74,20 @@ def _hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
 
 
-# Предвычисленные RGB-кортежи — PDF ВСЕГДА на белом фоне,
-# поэтому текстовые цвета фиксированы, не из палитры UI.
-_C_BG_MAIN    = _hex_to_rgb(COLORS.bg_main)
-_C_BG_CARD    = (245, 245, 248)               # Светлый фон карточек PDF
-_C_BG_DARK    = _hex_to_rgb(COLORS.bg_dark)
-_C_NAVY       = (30, 42, 69)                   # Тёмно-синий заголовки
-_C_INDIGO     = _hex_to_rgb(COLORS.blue_indigo)
-_C_ULTRA      = _hex_to_rgb(COLORS.blue_ultra)
-_C_GREEN      = _hex_to_rgb(COLORS.green_deep)
-_C_YELLOW     = _hex_to_rgb(COLORS.yellow_kerria)
-_C_RED        = _hex_to_rgb(COLORS.red_crimson)
-_C_GRAY       = (120, 120, 130)                # Вторичный текст PDF
-_C_SILVER     = (170, 170, 180)
-_C_TEXT       = (30, 30, 35)                    # Основной текст — ЧЁРНЫЙ
-_C_TEXT2      = (100, 100, 110)                 # Вторичный — тёмно-серый
+# Предвычисленные RGB — профессиональная палитра Navy Blue
+_C_BG_MAIN    = (255, 255, 255)
+_C_BG_CARD    = (237, 242, 250)                # Светло-голубой фон карточек
+_C_BG_DARK    = (15, 25, 50)                   # Глубокий navy
+_C_NAVY       = (10, 30, 70)                   # Navy Blue основной
+_C_INDIGO     = (25, 65, 155)                  # Royal Blue акцент
+_C_ULTRA      = (20, 50, 120)                  # Тёмно-синий
+_C_GREEN      = (15, 140, 70)                  # Профессиональный зелёный
+_C_YELLOW     = (230, 160, 0)                  # Тёплый жёлтый
+_C_RED        = (195, 40, 40)                  # Глубокий красный
+_C_GRAY       = (90, 95, 110)                  # Серый текст
+_C_SILVER     = (175, 180, 195)
+_C_TEXT       = (20, 20, 25)                    # Почти чёрный
+_C_TEXT2      = (60, 65, 80)                    # Тёмно-серый
 _C_WHITE      = (255, 255, 255)
 
 
@@ -96,11 +95,18 @@ _C_WHITE      = (255, 255, 255)
 # 2. ШРИФТЫ — DejaVu Sans (кириллица)
 # ═══════════════════════════════════════════════════════════════════
 
-# Стандартные пути к DejaVu на Linux (Streamlit Cloud — Debian)
+# Стандартные пути к шрифтам на Linux (Streamlit Cloud — Debian)
 _FONT_PATHS = {
     "regular": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     "bold":    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "italic":  "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf",
+}
+
+# Liberation Serif = Times New Roman (метрически совместимый, кириллица)
+_SERIF_PATHS = {
+    "regular": "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
+    "bold":    "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
+    "italic":  "/usr/share/fonts/truetype/liberation/LiberationSerif-Italic.ttf",
 }
 
 
@@ -133,15 +139,19 @@ _DEJAVU_LOCAL = {
 
 def _register_fonts(pdf: FPDF) -> str:
     """
-    Регистрирует TTF-шрифты с поддержкой кириллицы.
-
-    Порядок поиска:
-        1. Системные пути (/usr/share/fonts)
-        2. /tmp/fonts (скачанные ранее)
-        3. Скачивание с GitHub
-        4. Helvetica (fallback без кириллицы)
+    Регистрирует шрифты. Приоритет:
+    1. Liberation Serif (= Times New Roman, кириллица)
+    2. DejaVu Sans (кириллица, fallback)
+    3. Helvetica (без кириллицы, крайний fallback)
     """
-    # Попытка 1: системные шрифты
+    # Попытка 1: Liberation Serif (Times New Roman)
+    if os.path.exists(_SERIF_PATHS["regular"]):
+        pdf.add_font("TimesRU", "", _SERIF_PATHS["regular"])
+        pdf.add_font("TimesRU", "B", _SERIF_PATHS["bold"])
+        pdf.add_font("TimesRU", "I", _SERIF_PATHS["italic"])
+        return "TimesRU"
+
+    # Попытка 2: DejaVu Sans
     if os.path.exists(_FONT_PATHS["regular"]):
         pdf.add_font("DejaVu", "", _FONT_PATHS["regular"])
         if os.path.exists(_FONT_PATHS["bold"]):
@@ -154,33 +164,18 @@ def _register_fonts(pdf: FPDF) -> str:
             pdf.add_font("DejaVu", "I", _FONT_PATHS["regular"])
         return "DejaVu"
 
-    # Попытка 2: поиск в системе
-    for search_dir in ["/usr/share/fonts", "/usr/local/share/fonts"]:
-        for root, _dirs, files in os.walk(search_dir):
-            for f in files:
-                if f == "DejaVuSans.ttf":
-                    base = root
-                    pdf.add_font("DejaVu", "", os.path.join(base, "DejaVuSans.ttf"))
-                    bold_path = os.path.join(base, "DejaVuSans-Bold.ttf")
-                    pdf.add_font("DejaVu", "B", bold_path if os.path.exists(bold_path) else os.path.join(base, "DejaVuSans.ttf"))
-                    italic_path = os.path.join(base, "DejaVuSans-Oblique.ttf")
-                    pdf.add_font("DejaVu", "I", italic_path if os.path.exists(italic_path) else os.path.join(base, "DejaVuSans.ttf"))
-                    return "DejaVu"
-
-    # Попытка 3: скачивание с GitHub
+    # Попытка 3: скачивание DejaVu с GitHub
     all_ok = True
     for key in ["regular", "bold", "italic"]:
         if not _download_font(_DEJAVU_URLS[key], _DEJAVU_LOCAL[key]):
             all_ok = False
             break
-
     if all_ok and os.path.exists(_DEJAVU_LOCAL["regular"]):
         pdf.add_font("DejaVu", "", _DEJAVU_LOCAL["regular"])
         pdf.add_font("DejaVu", "B", _DEJAVU_LOCAL["bold"])
         pdf.add_font("DejaVu", "I", _DEJAVU_LOCAL["italic"])
         return "DejaVu"
 
-    # Крайний fallback
     return "Helvetica"
 
 
@@ -207,33 +202,41 @@ class _ReportPDF(FPDF):
         self.set_auto_page_break(auto=True, margin=25)
 
     def header(self) -> None:
-        """Верхний колонтитул: логотип + название + линия."""
+        """Верхний колонтитул: минимальный технологичный стиль."""
         if self.page_no() == 1:
-            # Титульная страница — без стандартного хедера
             return
 
-        self.set_font(self.font_family, "B", 8)
+        # Тонкая акцентная линия сверху
+        self.set_fill_color(*_C_INDIGO)
+        self.rect(0, 0, self.w, 1.5, "F")
+
+        self.set_y(5)
+        self.set_font(self.font_family, "B", 7.5)
         self.set_text_color(*_C_NAVY)
-        self.cell(0, 5, f"{APP_TITLE} — {APP_SUBTITLE}", align="L")
+        self.cell(0, 4, f"AI-OSINT", align="L")
 
-        self.set_font(self.font_family, "", 8)
+        self.set_font(self.font_family, "", 7.5)
         self.set_text_color(*_C_GRAY)
-        self.cell(0, 5, self.report_date, align="R", new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 4, self.report_date, align="R", new_x="LMARGIN", new_y="NEXT")
 
-        # Линия-разделитель (индиго)
-        self.set_draw_color(*_C_INDIGO)
-        self.set_line_width(0.4)
+        self.set_draw_color(220, 220, 230)
+        self.set_line_width(0.15)
         self.line(self.l_margin, self.get_y() + 1,
                   self.w - self.r_margin, self.get_y() + 1)
-        self.ln(5)
+        self.ln(4)
 
     def footer(self) -> None:
-        """Нижний колонтитул: копирайт + номер страницы."""
+        """Нижний колонтитул: тонкая линия + номер страницы."""
         self.set_y(-15)
+        self.set_draw_color(200, 200, 210)
+        self.set_line_width(0.2)
+        self.line(self.l_margin, self.get_y(),
+                  self.w - self.r_margin, self.get_y())
+        self.ln(2)
         self.set_font(self.font_family, "", 7)
-        self.set_text_color(*_C_GRAY)
-        self.cell(0, 5, COPYRIGHT, align="L")
-        self.cell(0, 5, f"Страница {self.page_no()}/{{nb}}", align="R")
+        self.set_text_color(150, 150, 160)
+        self.cell(0, 5, f"AI-OSINT  |  {self.report_date}", align="L")
+        self.cell(0, 5, f"{self.page_no()}/{{nb}}", align="R")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -241,112 +244,99 @@ class _ReportPDF(FPDF):
 # ═══════════════════════════════════════════════════════════════════
 
 def _draw_title_page(pdf: _ReportPDF) -> None:
-    """Титульная страница: темный блок + метаданные + авторы."""
+    """Компактный заголовок с блоком О документе — всё на стр. 1."""
     pdf.add_page()
 
-    # ── Тёмный блок-хедер (имитация aio-header) ──
-    block_h = 70
-    pdf.set_fill_color(*_C_BG_DARK)
-    pdf.rect(0, 0, pdf.w, block_h, "F")
-
-    # Акцентная линия слева (индиго)
+    # ── Яркая акцентная полоса сверху ──
     pdf.set_fill_color(*_C_INDIGO)
-    pdf.rect(0, 0, 5, block_h, "F")
+    pdf.rect(0, 0, pdf.w, 4, "F")
+    pdf.set_fill_color(*_C_YELLOW)
+    pdf.rect(0, 4, 40, 1.5, "F")
 
-    # Название системы
-    pdf.set_xy(15, 15)
+    # ── AI-OSINT + дата ──
+    pdf.set_xy(pdf.l_margin, 10)
     pdf.set_font(pdf.font_family, "B", 22)
-    pdf.set_text_color(*_C_WHITE)
-    pdf.cell(0, 10, APP_TITLE, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(*_C_NAVY)
+    pdf.cell(100, 11, APP_TITLE)
+
+    pdf.set_font(pdf.font_family, "", 11)
+    pdf.set_text_color(*_C_GRAY)
+    pdf.cell(0, 11, pdf.report_date, align="R")
+    pdf.ln(13)
 
     # Подзаголовок
-    pdf.set_x(15)
     pdf.set_font(pdf.font_family, "", 11)
-    pdf.set_text_color(*_C_SILVER)
-    pdf.multi_cell(pdf.w - 30, 6, APP_SUBTITLE)
-
-    # Метод
-    pdf.set_x(15)
-    pdf.set_font(pdf.font_family, "I", 9)
-    pdf.set_text_color(*_C_SILVER)
-    pdf.cell(0, 8, APP_METHOD)
-
-    # ── Основной блок ──
-    pdf.set_y(block_h + 15)
-    pdf.set_text_color(*_C_TEXT)
-
-    # Заголовок отчёта
-    pdf.set_font(pdf.font_family, "B", 16)
-    pdf.cell(0, 10, "Аналитический отчёт", align="C",
+    pdf.set_text_color(*_C_TEXT2)
+    pdf.cell(0, 6, "Аналитический отчёт  \u2014  " + APP_METHOD,
              new_x="LMARGIN", new_y="NEXT")
+
+    # Разделитель
     pdf.ln(3)
-
-    # Дата формирования
-    pdf.set_font(pdf.font_family, "", 11)
-    pdf.set_text_color(*_C_TEXT2)
-    pdf.cell(0, 7,
-             f"Дата формирования: {pdf.report_date}",
-             align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(10)
-
-    # ── Авторы ──
-    pdf.set_font(pdf.font_family, "B", 11)
-    pdf.set_text_color(*_C_NAVY)
-    pdf.cell(0, 8, "Авторы", new_x="LMARGIN", new_y="NEXT")
-
-    pdf.set_draw_color(*_C_YELLOW)
-    pdf.set_line_width(0.6)
-    pdf.line(pdf.l_margin, pdf.get_y(), pdf.l_margin + 30, pdf.get_y())
-    pdf.ln(3)
-
-    pdf.set_font(pdf.font_family, "", 10)
-    pdf.set_text_color(*_C_TEXT)
-    for author in AUTHORS:
-        pdf.cell(0, 6,
-                 f"{author['name']} — {author['role']} ({author['title']})",
-                 new_x="LMARGIN", new_y="NEXT")
-
-    pdf.ln(5)
-    pdf.set_font(pdf.font_family, "", 10)
-    pdf.set_text_color(*_C_TEXT2)
-    pdf.cell(0, 6, UNIVERSITY, new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, f"{YEAR} г.", new_x="LMARGIN", new_y="NEXT")
-
-    # ── Линия-разделитель внизу ──
-    pdf.ln(15)
+    y = pdf.get_y()
     pdf.set_draw_color(*_C_INDIGO)
-    pdf.set_line_width(0.3)
-    pdf.line(pdf.l_margin, pdf.get_y(),
-             pdf.w - pdf.r_margin, pdf.get_y())
-    pdf.ln(8)
+    pdf.set_line_width(0.8)
+    pdf.line(pdf.l_margin, y, pdf.l_margin + 35, y)
+    pdf.set_draw_color(200, 205, 215)
+    pdf.set_line_width(0.2)
+    pdf.line(pdf.l_margin + 37, y, pdf.w - pdf.r_margin, y)
+    pdf.ln(5)
 
-    # Аннотация
-    pdf.set_font(pdf.font_family, "I", 9)
-    pdf.set_text_color(*_C_TEXT2)
-    pdf.multi_cell(0, 5, (
-        "Настоящий отчёт сформирован автоматически на основе "
-        "результатов вычислительного имитационного моделирования "
-        "информационного поля Казахстана в глобальном медиапространстве. "
-        "Содержит значения индикаторов обнаружения информационных "
-        "операций, агрегированный Индекс угрозы и рекомендации "
-        "экспертной системы."
+    # ── Блок «О документе» ──
+    card_y = pdf.get_y()
+    card_w = pdf.w - pdf.l_margin - pdf.r_margin
+    # Calculate card height based on content
+    card_h = 52
+    pdf.set_fill_color(*_C_BG_CARD)
+    pdf.rect(pdf.l_margin, card_y, card_w, card_h, "F")
+    pdf.set_fill_color(*_C_INDIGO)
+    pdf.rect(pdf.l_margin, card_y, 3, card_h, "F")
+
+    pdf.set_xy(pdf.l_margin + 8, card_y + 4)
+    pdf.set_font(pdf.font_family, "B", 14)
+    pdf.set_text_color(*_C_NAVY)
+    pdf.cell(0, 7, "О документе")
+    pdf.ln(8)
+    pdf.set_x(pdf.l_margin + 8)
+    pdf.set_font(pdf.font_family, "", 12)
+    pdf.set_text_color(*_C_TEXT)
+    pdf.multi_cell(card_w - 14, 6, (
+        "Настоящий отчёт сформирован автоматически аналитической "
+        "платформой AI-OSINT на основе результатов вычислительного "
+        "имитационного моделирования информационного поля Казахстана "
+        "в глобальном медиапространстве. Отчёт содержит сводную таблицу "
+        "экспериментов, значения шести индикаторов обнаружения "
+        "информационных операций, агрегированный Индекс угрозы (0\u2013100), "
+        "рекомендации экспертной системы и параметры воспроизводимости."
     ))
+
+    pdf.set_y(card_y + card_h + 4)
 
 
 def _draw_section_header(pdf: _ReportPDF, title: str) -> None:
-    """Заголовок секции: жирный текст + жёлтая линия."""
+    """Заголовок секции: яркий, крупный."""
     if pdf.get_y() > pdf.h - 40:
         pdf.add_page()
 
-    pdf.ln(6)
-    pdf.set_font(pdf.font_family, "B", 13)
-    pdf.set_text_color(*_C_NAVY)
-    pdf.cell(0, 8, title, new_x="LMARGIN", new_y="NEXT")
-
-    pdf.set_draw_color(*_C_YELLOW)
-    pdf.set_line_width(0.6)
-    pdf.line(pdf.l_margin, pdf.get_y(), pdf.l_margin + 45, pdf.get_y())
     pdf.ln(5)
+    y = pdf.get_y()
+
+    # Фон
+    pdf.set_fill_color(230, 238, 250)
+    pdf.rect(pdf.l_margin, y, pdf.w - pdf.l_margin - pdf.r_margin, 11, "F")
+
+    # Индиго-акцент слева
+    pdf.set_fill_color(*_C_INDIGO)
+    pdf.rect(pdf.l_margin, y, 3, 11, "F")
+
+    # Жёлтый акцент снизу
+    pdf.set_fill_color(*_C_YELLOW)
+    pdf.rect(pdf.l_margin, y + 11, 25, 1.2, "F")
+
+    pdf.set_xy(pdf.l_margin + 7, y + 1)
+    pdf.set_font(pdf.font_family, "B", 14)
+    pdf.set_text_color(*_C_NAVY)
+    pdf.cell(0, 9, title)
+    pdf.set_y(y + 15)
 
 
 def _draw_summary_table(
@@ -356,12 +346,10 @@ def _draw_summary_table(
     """Сводная таблица экспериментов."""
     _draw_section_header(pdf, "1. Сводная таблица экспериментов")
 
-    pdf.set_font(pdf.font_family, "", 9)
-    pdf.set_text_color(*_C_TEXT2)
-    pdf.multi_cell(0, 5, (
-        "Перечень симуляций, включённых в отчёт. Каждая строка — "
-        "один эксперимент с указанием сценария, параметров и "
-        "агрегированного Индекса угрозы."
+    pdf.set_font(pdf.font_family, "", 14)
+    pdf.set_text_color(*_C_TEXT)
+    pdf.multi_cell(0, 7, (
+        "Перечень симуляций, включённых в отчёт."
     ))
     pdf.ln(3)
 
@@ -370,10 +358,11 @@ def _draw_summary_table(
     headers = ["Дата", "Сценарий", "Агентов", "Суток", "Макс. фаза", "Индекс"]
 
     pdf.set_font(pdf.font_family, "B", 8)
-    pdf.set_fill_color(*_C_NAVY)
+    pdf.set_fill_color(*_C_INDIGO)
     pdf.set_text_color(*_C_WHITE)
+    pdf.set_draw_color(220, 220, 230)
     for i, header in enumerate(headers):
-        pdf.cell(col_widths[i], 7, header, border=1, fill=True, align="C")
+        pdf.cell(col_widths[i], 8, header, border=0, fill=True, align="C")
     pdf.ln()
 
     # Строки данных
@@ -381,9 +370,8 @@ def _draw_summary_table(
     pdf.set_text_color(*_C_TEXT)
 
     for idx, rec in enumerate(records):
-        # Чередование фона строк
         if idx % 2 == 0:
-            pdf.set_fill_color(*_C_BG_CARD)
+            pdf.set_fill_color(248, 248, 252)
         else:
             pdf.set_fill_color(*_C_WHITE)
 
@@ -396,9 +384,14 @@ def _draw_summary_table(
             f"{rec.threat_index:.1f}",
         ]
         for i, cell_text in enumerate(row):
-            pdf.cell(col_widths[i], 6, cell_text, border=1,
+            pdf.cell(col_widths[i], 7, cell_text, border=0,
                      fill=True, align="C")
+        # Нижняя линия строки
         pdf.ln()
+        pdf.set_draw_color(235, 235, 240)
+        pdf.set_line_width(0.1)
+        pdf.line(pdf.l_margin, pdf.get_y(),
+                 pdf.l_margin + sum(col_widths), pdf.get_y())
 
     pdf.ln(3)
 
@@ -448,13 +441,11 @@ def _draw_indicators(
     suffix = f" ({record_label})" if record_label else ""
     _draw_section_header(pdf, f"2. Индикаторы обнаружения{suffix}")
 
-    pdf.set_font(pdf.font_family, "", 9)
-    pdf.set_text_color(*_C_TEXT2)
-    pdf.multi_cell(0, 5, (
+    pdf.set_font(pdf.font_family, "", 14)
+    pdf.set_text_color(*_C_TEXT)
+    pdf.multi_cell(0, 7, (
         "Шесть индикаторов обнаружения информационных операций. "
-        "Каждый индикатор имеет три порога: норма, повышенное "
-        "внимание, угроза. Значения нормализованы для "
-        "агрегации в Индекс угрозы."
+        "Каждый имеет три порога: норма, внимание, угроза."
     ))
     pdf.ln(3)
 
@@ -473,68 +464,69 @@ def _draw_indicators(
         if ind is None:
             continue
 
-        if pdf.get_y() > pdf.h - 30:
+        if pdf.get_y() > pdf.h - 35:
             pdf.add_page()
 
         cfg = INDICATORS.get(key)
         color = _traffic_color(ind.css_class)
 
-        # Акцентная полоска слева
+        # ── Фоновая карточка ──
         y_start = pdf.get_y()
+        card_h = 28
+        pdf.set_fill_color(*_C_BG_CARD)
+        pdf.rect(pdf.l_margin, y_start, pdf.w - pdf.l_margin - pdf.r_margin, card_h, "F")
+
+        # Акцентная полоска слева
         pdf.set_fill_color(*color)
-        pdf.rect(pdf.l_margin, y_start, 2, 14, "F")
+        pdf.rect(pdf.l_margin, y_start, 3, card_h, "F")
 
-        # Название + эмодзи + значение
-        pdf.set_x(pdf.l_margin + 5)
-        pdf.set_font(pdf.font_family, "B", 10)
+        # СТРОКА 1: Маркер + название
+        pdf.set_xy(pdf.l_margin + 7, y_start + 2)
+        pdf.set_font(pdf.font_family, "B", 13)
         pdf.set_text_color(*_C_TEXT)
-        pdf.cell(85, 7, f"{_traffic_marker(ind.css_class)}  {ind.label_ru}", align="L")
+        marker = _traffic_marker(ind.css_class)
+        pdf.cell(0, 7, f"{marker}  {ind.label_ru}",
+                 new_x="LMARGIN", new_y="NEXT")
 
-        # Значение
-        pdf.set_font(pdf.font_family, "B", 12)
+        # СТРОКА 2: Значение + статус-бейдж + norm
+        pdf.set_x(pdf.l_margin + 7)
+        pdf.set_font(pdf.font_family, "B", 20)
         pdf.set_text_color(*color)
-        pdf.cell(25, 7, f"{ind.value:.2f}", align="C")
+        val_str = f"{ind.value:.2f}" if ind.value < 100 else f"{ind.value:.1f}"
+        pdf.cell(40, 9, val_str, align="L")
 
         # Статус-бейдж
-        pdf.set_font(pdf.font_family, "B", 8)
-        pdf.set_fill_color(*color)
+        pdf.set_font(pdf.font_family, "B", 10)
         if ind.css_class == "badge-yellow":
             pdf.set_text_color(*_C_TEXT)
         else:
             pdf.set_text_color(*_C_WHITE)
-        pdf.cell(30, 7, ind.status_ru, align="C", fill=True)
+        pdf.set_fill_color(*color)
+        badge_w = pdf.get_string_width(ind.status_ru) + 12
+        pdf.cell(badge_w, 9, ind.status_ru, align="C", fill=True)
 
-        # Нормализованное значение
-        pdf.set_font(pdf.font_family, "", 8)
+        pdf.set_font(pdf.font_family, "", 9)
         pdf.set_text_color(*_C_GRAY)
-        pdf.cell(0, 7, f"[norm: {ind.normalized:.2f}]", align="R")
+        pdf.cell(0, 9, f"  norm: {ind.normalized:.2f}", align="L")
         pdf.ln()
 
-        # Формула и пороги
+        # СТРОКА 3: Формула + пороги с кружочками
         if cfg:
-            pdf.set_x(pdf.l_margin + 5)
-            pdf.set_font(pdf.font_family, "I", 7.5)
+            pdf.set_x(pdf.l_margin + 7)
+            pdf.set_font(pdf.font_family, "", 9)
             pdf.set_text_color(*_C_TEXT2)
 
-            g, y, r = cfg.thresholds
+            g, y_thresh, r = cfg.thresholds
             if key == "spread_speed":
-                thresh_str = f">{g} / >{y} / <={r} суток"
+                thresh_str = f"Пороги:  >{g} суток  |  >{y_thresh} суток  |  <={r} суток"
             else:
-                thresh_str = f"<{g} / <{y} / >={r}"
+                thresh_str = f"Пороги:  <{g}  |  <{y_thresh}  |  >={r}"
 
-            pdf.cell(0, 5,
-                     f"Формула: {cfg.formula}  |  Пороги: {thresh_str}",
+            proxy_str = "  |  модельная оценка" if ind.is_proxy else ""
+            pdf.cell(0, 5, f"{cfg.formula}  |  {thresh_str}{proxy_str}",
                      new_x="LMARGIN", new_y="NEXT")
 
-        # Прокси-метка
-        if ind.is_proxy:
-            pdf.set_x(pdf.l_margin + 5)
-            pdf.set_font(pdf.font_family, "I", 7)
-            pdf.set_text_color(*_C_GRAY)
-            pdf.cell(0, 4, "(модельная оценка — данные GDELT недоступны)",
-                     new_x="LMARGIN", new_y="NEXT")
-
-        pdf.ln(2)
+        pdf.set_y(y_start + card_h + 3)
 
 
 def _draw_threat_index(
@@ -556,14 +548,14 @@ def _draw_threat_index(
         bar_color = _C_RED
 
     # Большое число
-    pdf.set_font(pdf.font_family, "B", 28)
+    pdf.set_font(pdf.font_family, "B", 42)
     pdf.set_text_color(*bar_color)
-    pdf.cell(0, 15, f"{_threat_marker(idx)}  {idx:.1f}", align="C",
+    pdf.cell(0, 22, f"{idx:.1f}", align="C",
              new_x="LMARGIN", new_y="NEXT")
 
     # Уровень
-    pdf.set_font(pdf.font_family, "B", 12)
-    pdf.cell(0, 8, detection.threat_label, align="C",
+    pdf.set_font(pdf.font_family, "B", 16)
+    pdf.cell(0, 10, detection.threat_label, align="C",
              new_x="LMARGIN", new_y="NEXT")
     pdf.ln(3)
 
@@ -571,7 +563,7 @@ def _draw_threat_index(
     bar_x = pdf.l_margin + 10
     bar_w = pdf.w - pdf.l_margin - pdf.r_margin - 20
     bar_y = pdf.get_y()
-    bar_h = 8
+    bar_h = 10
 
     # Фон шкалы
     pdf.set_fill_color(*_C_SILVER)
@@ -589,32 +581,29 @@ def _draw_threat_index(
     pdf.set_y(bar_y + bar_h + 2)
 
     # Подписи шкалы
-    pdf.set_font(pdf.font_family, "", 7)
+    pdf.set_font(pdf.font_family, "", 11)
     pdf.set_text_color(*_C_GRAY)
     pdf.set_x(bar_x)
-    pdf.cell(bar_w / 3, 4, "0 — Норма", align="L")
-    pdf.cell(bar_w / 3, 4, "30–60 — Внимание", align="C")
-    pdf.cell(bar_w / 3, 4, "100 — Критическая", align="R")
-    pdf.ln(5)
+    pdf.cell(bar_w / 3, 6, "0 \u2014 Норма", align="L")
+    pdf.cell(bar_w / 3, 6, "30\u201360 \u2014 Внимание", align="C")
+    pdf.cell(bar_w / 3, 6, "100 \u2014 Критическая", align="R")
+    pdf.ln(8)
 
-    # Пояснение формулы
-    pdf.set_font(pdf.font_family, "I", 8)
-    pdf.set_text_color(*_C_TEXT2)
-    pdf.multi_cell(0, 4.5, (
-        "Индекс угрозы (0-100) = сумма взвешенных нормализованных "
-        "значений 6 индикаторов. Веса отражают диагностическую "
-        "значимость каждого индикатора для обнаружения "
-        "координированных информационных операций."
+    # Пояснение
+    pdf.set_font(pdf.font_family, "", 14)
+    pdf.set_text_color(*_C_TEXT)
+    pdf.multi_cell(0, 7, (
+        "Индекс угрозы (0\u2013100) = сумма взвешенных "
+        "нормализованных значений 6 индикаторов обнаружения."
     ))
 
     if detection.has_proxy:
         pdf.ln(2)
-        pdf.set_font(pdf.font_family, "I", 7.5)
+        pdf.set_font(pdf.font_family, "I", 11)
         pdf.set_text_color(*_C_GRAY)
-        pdf.multi_cell(0, 4, (
-            "Примечание: часть индикаторов вычислена через модельные "
-            "прокси-оценки (данные GDELT недоступны). Точность "
-            "агрегированного индекса снижена."
+        pdf.multi_cell(0, 5.5, (
+            "Примечание: часть индикаторов вычислена через "
+            "модельные прокси-оценки. Точность снижена."
         ))
 
 
@@ -626,47 +615,32 @@ def _draw_recommendations(
     _draw_section_header(pdf, "4. Рекомендации экспертной системы")
 
     if not recommendations:
-        pdf.set_font(pdf.font_family, "I", 10)
+        pdf.set_font(pdf.font_family, "I", 14)
         pdf.set_text_color(*_C_TEXT2)
-        pdf.cell(0, 7, "Рекомендации не сформированы.",
+        pdf.cell(0, 8, "Рекомендации не сформированы.",
                  new_x="LMARGIN", new_y="NEXT")
         return
 
-    pdf.set_font(pdf.font_family, "", 9)
-    pdf.set_text_color(*_C_TEXT2)
-    pdf.multi_cell(0, 5, (
-        "Экспертная система на основе продукционных правил "
-        "(rule-based engine) анализирует комбинации значений "
-        "индикаторов и формирует рекомендации."
-    ))
-    pdf.ln(3)
-
     for i, rec in enumerate(recommendations, 1):
-        if pdf.get_y() > pdf.h - 25:
+        if pdf.get_y() > pdf.h - 30:
             pdf.add_page()
 
-        # Номер (индиго)
-        pdf.set_font(pdf.font_family, "B", 9)
+        pdf.set_font(pdf.font_family, "B", 14)
         pdf.set_text_color(*_C_INDIGO)
-        pdf.cell(8, 5, f"{i}.", align="R")
+        pdf.cell(10, 7, f"{i}.", align="R")
 
-        # Текст рекомендации
-        # Убираем эмодзи в начале (если есть) для чистоты PDF
         rec_text = rec
         if len(rec_text) > 2 and not rec_text[0].isalnum():
-            # Пропускаем эмодзи-префикс (2-4 символа)
             for skip in [4, 3, 2]:
                 if len(rec_text) > skip and rec_text[skip - 1] == " ":
                     rec_text = rec_text[skip:]
                     break
 
-        pdf.set_font(pdf.font_family, "", 9)
+        pdf.set_font(pdf.font_family, "", 14)
         pdf.set_text_color(*_C_TEXT)
-        # Используем multi_cell для длинных рекомендаций
-        x_before = pdf.get_x()
-        pdf.set_x(pdf.l_margin + 10)
-        pdf.multi_cell(pdf.w - pdf.l_margin - pdf.r_margin - 12, 5, rec_text)
-        pdf.ln(1)
+        pdf.set_x(pdf.l_margin + 12)
+        pdf.multi_cell(pdf.w - pdf.l_margin - pdf.r_margin - 14, 7, rec_text)
+        pdf.ln(3)
 
 
 def _draw_experiment_details(
@@ -707,14 +681,14 @@ def _draw_experiment_details(
             ("Уровень", rec.threat_label or "—"),
         ]
 
-        pdf.set_font(pdf.font_family, "", 8.5)
+        pdf.set_font(pdf.font_family, "", 14)
         for label, value in params:
             pdf.set_text_color(*_C_TEXT2)
-            pdf.cell(45, 5, label + ":", align="R")
+            pdf.cell(55, 7, label + ":", align="R")
             pdf.set_text_color(*_C_TEXT)
-            pdf.set_font(pdf.font_family, "B", 8.5)
-            pdf.cell(0, 5, f"  {value}", new_x="LMARGIN", new_y="NEXT")
-            pdf.set_font(pdf.font_family, "", 8.5)
+            pdf.set_font(pdf.font_family, "B", 14)
+            pdf.cell(0, 7, f"  {value}", new_x="LMARGIN", new_y="NEXT")
+            pdf.set_font(pdf.font_family, "", 14)
 
         # Монте-Карло (если есть)
         if rec.mc_viral_probability is not None:
@@ -766,39 +740,37 @@ def _draw_methodology_note(pdf: _ReportPDF) -> None:
 
     _draw_section_header(pdf, "6. Методологическая справка")
 
-    pdf.set_font(pdf.font_family, "", 8.5)
+    pdf.set_font(pdf.font_family, "", 14)
     pdf.set_text_color(*_C_TEXT)
-    pdf.multi_cell(0, 5, (
-        "Результаты получены методами вычислительного имитационного "
-        "моделирования. Система интегрирует:"
+    pdf.multi_cell(0, 7, (
+        "Результаты получены методами вычислительного "
+        "имитационного моделирования:"
     ))
-    pdf.ln(2)
+    pdf.ln(3)
 
     methods = [
         ("OSINT", "разведка на основе открытых источников (GDELT Project)"),
-        ("NLP", "обработка естественного языка (TF-IDF, анализ тональности)"),
-        ("АОМ", "агентно-ориентированное моделирование (граф Барабаши-Альберт, 4 типа агентов)"),
-        ("Цепи Маркова", "5 состояний нарратива (латентная - зарождение - рост - вирусная - затухание)"),
-        ("Монте-Карло", "стохастическое моделирование (100-5000 итераций, 95% доверительный интервал)"),
+        ("NLP", "обработка естественного языка (TF-IDF, тональность)"),
+        ("АОМ", "агентно-ориентированное моделирование (Барабаши\u2013Альберт)"),
+        ("Марков", "5 состояний нарратива с динамической матрицей"),
+        ("М-Карло", "стохастическое моделирование (100\u20135000 итераций)"),
     ]
 
     for abbr, desc in methods:
-        pdf.set_font(pdf.font_family, "B", 8.5)
+        pdf.set_font(pdf.font_family, "B", 12)
         pdf.set_text_color(*_C_NAVY)
-        pdf.cell(30, 5, abbr, align="R")
-        pdf.set_font(pdf.font_family, "", 8.5)
-        pdf.set_text_color(*_C_TEXT2)
-        pdf.cell(0, 5, f"  — {desc}", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(25, 7, abbr, align="R")
+        pdf.set_font(pdf.font_family, "", 12)
+        pdf.set_text_color(*_C_TEXT)
+        pdf.cell(0, 7, f"  \u2014 {desc}", new_x="LMARGIN", new_y="NEXT")
 
     pdf.ln(4)
 
-    pdf.set_font(pdf.font_family, "I", 8)
+    pdf.set_font(pdf.font_family, "I", 10)
     pdf.set_text_color(*_C_GRAY)
-    pdf.multi_cell(0, 4.5, (
-        "Индикаторы калиброваны на основе: Stanford Internet Observatory "
-        "(Nimmo, 2019), Meta CIB Reports (Gleicher, 2020), Botometer "
-        "(Varol et al., 2017), GDELT Technical Documentation. "
-        "Экспертная система — rule-based engine (Buchanan & Shortliffe, 1984)."
+    pdf.multi_cell(0, 5.5, (
+        "Калибровка: Stanford IO (Nimmo, 2019), Meta CIB (Gleicher, 2020), "
+        "Botometer (Varol et al., 2017), GDELT Documentation."
     ))
 
 
@@ -905,11 +877,8 @@ def generate_report(
     pdf.font_family = font
     pdf.alias_nb_pages()
 
-    # ── 1. Титульная страница ──
+    # ── 1. Заголовок + сводная таблица (на одной странице) ──
     _draw_title_page(pdf)
-
-    # ── 2. Сводная таблица ──
-    pdf.add_page()
     _draw_summary_table(pdf, records)
 
     # ── 3–4. Индикаторы + Индекс угрозы ──
